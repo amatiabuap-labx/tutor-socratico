@@ -4,48 +4,88 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Tutor Socrático · AmatIA LabX</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Lora:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
 <style>
 :root{--azul:#9B4423;--azul2:#2F6B5C;--oro:#B8893A;--bg:#F3EBDD;--card:#FBF6EC;--tx:#2B2118;--mut:#6B5B4B;--bd:#D9CBB3;--ia:#E6EEE6;--us:#F6E6C8;
-box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
-@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--azul:#B5532F;--azul2:#7DB8A6;--bg:#1B1510;--card:#251D16;--tx:#EFE6D8;--mut:#B3A18C;--bd:#3A2E23;--ia:#22302B;--us:#3D3020}}
-:root[data-theme="dark"]{--azul:#B5532F;--azul2:#7DB8A6;--bg:#1B1510;--card:#251D16;--tx:#EFE6D8;--mut:#B3A18C;--bd:#3A2E23;--ia:#22302B;--us:#3D3020}
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
+--font-body:'Inter',system-ui,-apple-system,sans-serif;--font-title:'Lora',Georgia,serif;--shadow:0 4px 12px rgba(0,0,0,0.05);}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--azul:#B5532F;--azul2:#7DB8A6;--bg:#1B1510;--card:#251D16;--tx:#EFE6D8;--mut:#B3A18C;--bd:#3A2E23;--ia:#22302B;--us:#3D3020;--shadow:0 4px 12px rgba(0,0,0,0.3);}}
+:root[data-theme="dark"]{--azul:#B5532F;--azul2:#7DB8A6;--bg:#1B1510;--card:#251D16;--tx:#EFE6D8;--mut:#B3A18C;--bd:#3A2E23;--ia:#22302B;--us:#3D3020;--shadow:0 4px 12px rgba(0,0,0,0.3);}
 *{box-sizing:border-box}html{scroll-padding-top:env(safe-area-inset-top,0px)}
-body{margin:0;background-color:var(--bg);background-image:repeating-linear-gradient(115deg,rgba(120,90,50,.05) 0 2px,transparent 2px 7px),repeating-linear-gradient(25deg,rgba(120,90,50,.035) 0 1px,transparent 1px 9px);color:var(--tx);font:15px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
-header{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;background:#3A2A1E;color:#F3EBDD;padding:12px 16px;border-bottom:4px solid var(--oro)}.hr{display:flex;gap:6px;flex-wrap:wrap}
-header h1{margin:0;font:700 21px Georgia,"Iowan Old Style",serif}header small{opacity:.85}
+body{margin:0;background-color:var(--bg);background-image:repeating-linear-gradient(115deg,rgba(120,90,50,.05) 0 2px,transparent 2px 7px),repeating-linear-gradient(25deg,rgba(120,90,50,.035) 0 1px,transparent 1px 9px);color:var(--tx);font:15px/1.6 var(--font-body);transition:background-color 0.3s, color 0.3s;}
+header{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;background:#3A2A1E;color:#F3EBDD;padding:12px 16px;border-bottom:4px solid var(--oro)}.hr{display:flex;gap:8px;flex-wrap:wrap;align-items:center;}
+header h1{margin:0;font:700 21px var(--font-title)}header small{opacity:.85;font-size:12px;}
 main{max-width:900px;margin:0 auto;padding:14px}
-.card{background:var(--card);border:1px solid var(--bd);border-radius:10px;padding:14px;margin-bottom:12px}
-label{display:block;font-size:12px;color:var(--mut);margin:8px 0 3px}
-input,select,textarea{width:100%;padding:8px;border:1px solid var(--bd);border-radius:7px;background:var(--bg);color:var(--tx);font:inherit}
-button{background:var(--azul);color:#fff;border:0;border-radius:7px;padding:8px 14px;font:inherit;cursor:pointer}
-button.s{background:transparent;color:var(--azul2);border:1px solid var(--azul2)}button:disabled{opacity:.5}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:16px;margin-bottom:16px;box-shadow:var(--shadow);transition:background-color 0.3s, border-color 0.3s;}
+label{display:block;font-size:12px;font-weight:500;color:var(--mut);margin:12px 0 4px}
+input,select,textarea{width:100%;padding:10px;border:1px solid var(--bd);border-radius:8px;background:var(--bg);color:var(--tx);font:inherit;transition:border-color 0.2s;}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azul2);}
+button{background:var(--azul);color:#fff;border:0;border-radius:8px;padding:10px 16px;font:inherit;font-weight:500;cursor:pointer;transition:transform 0.1s, opacity 0.2s;}
+button:active{transform:scale(0.98);}
+button.s{background:transparent;color:var(--azul2);border:1px solid var(--azul2)}button:disabled{opacity:.5;cursor:not-allowed;}
 .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}.row>*{flex:1 1 140px}.row>button{flex:0 0 auto}
-nav{display:flex;gap:6px;margin-bottom:12px;overflow-x:auto}nav button{background:var(--card);color:var(--tx);border:1px solid var(--bd)}nav button.on{background:var(--azul);color:#fff}
-#chat{height:46vh;min-height:260px;overflow-y:auto;padding:4px}
-.m{padding:9px 12px;border-radius:10px;margin:6px 0;max-width:92%;white-space:pre-wrap}
-.ia{background:var(--ia);border-left:3px solid var(--azul2)}.us{background:var(--us);margin-left:auto;border-right:3px solid var(--oro)}
-.pill{display:inline-block;font-size:11px;background:var(--ia);border-radius:20px;padding:2px 9px;margin:2px}
-.hide{display:none!important}.mut{color:var(--mut);font-size:12px}
-#prev{border:1px solid var(--bd);border-radius:7px;padding:8px;min-height:120px;background:var(--bg);overflow-x:auto}
-pre{overflow-x:auto;white-space:pre-wrap}
-#pages{max-height:70vh;overflow:auto;border:1px solid var(--bd);border-radius:7px;background:#8a929b;padding:6px;margin-top:8px}.pg{position:relative;margin:0 auto 8px;width:100%}.pg canvas{display:block;width:100%;height:auto}.pg .ink{position:absolute;left:0;top:0;mix-blend-mode:multiply}button.on2{background:var(--oro);color:#17212B}
-button.hb{background:transparent;border:1px solid #D9C7A3;color:#F3EBDD;padding:5px 11px;font-size:13px}
-#tb td,#tb th{border-bottom:1px solid var(--bd);padding:5px 6px;text-align:left}#tb button{padding:3px 8px;font-size:12px}h2,h3,h4{font-family:Georgia,"Iowan Old Style",serif}
+nav{display:flex;gap:8px;margin-bottom:16px;overflow-x:auto;padding-bottom:4px;}nav button{background:var(--card);color:var(--tx);border:1px solid var(--bd);border-radius:20px;padding:8px 16px;font-weight:500;}nav button.on{background:var(--azul);color:#fff;border-color:var(--azul);}
+#chat{height:50vh;min-height:300px;overflow-y:auto;padding:10px;background:var(--bg);border-radius:8px;border:1px solid var(--bd);margin-bottom:12px;}
+.m{padding:12px 16px;border-radius:12px;margin:8px 0;max-width:90%;line-height:1.5;box-shadow:var(--shadow);font-size:14px;}
+.ia{background:var(--ia);border-left:4px solid var(--azul2);border-bottom-left-radius:2px;}
+.us{background:var(--us);margin-left:auto;border-right:4px solid var(--oro);border-bottom-right-radius:2px;}
+.pill{display:inline-block;font-size:11px;font-weight:600;background:var(--ia);color:var(--azul2);border-radius:20px;padding:3px 10px;margin:2px;}
+.hide{display:none!important}.mut{color:var(--mut);font-size:13px}
+#prev{border:1px solid var(--bd);border-radius:8px;padding:12px;min-height:120px;background:var(--bg);overflow-x:auto;font-size:14px;}
+pre{overflow-x:auto;white-space:pre-wrap;font-family:monospace;}
+#pages{max-height:70vh;overflow:auto;border:1px solid var(--bd);border-radius:8px;background:#8a929b;padding:8px;margin-top:8px}.pg{position:relative;margin:0 auto 8px;width:100%}.pg canvas{display:block;width:100%;height:auto}.pg .ink{position:absolute;left:0;top:0;mix-blend-mode:multiply}
+button.on2{background:var(--oro);color:#17212B}
+button.hb{background:transparent;border:1px solid #D9C7A3;color:#F3EBDD;padding:6px 12px;font-size:13px;border-radius:20px;display:flex;align-items:center;gap:6px;}
+button.hb:hover{background:rgba(255,255,255,0.1);}
+#tb td,#tb th{border-bottom:1px solid var(--bd);padding:8px 6px;text-align:left;font-size:13px;}#tb button{padding:4px 8px;font-size:12px;}
+h2,h3,h4{font-family:var(--font-title);margin-top:0;}
 #dmsg{transition:border-color .3s}
-#dbg{font:12px/1.4 ui-monospace,Menlo,monospace;white-space:pre-wrap;max-height:180px;overflow:auto;background:var(--bg);border:1px dashed var(--bd);border-radius:7px;padding:8px;margin-top:8px}
-.pdfchip{display:inline-block;background:var(--oro);color:#17212B;border-radius:20px;padding:2px 9px;font-size:11px;margin-left:6px}
+#dbg{font:12px/1.4 ui-monospace,Menlo,monospace;white-space:pre-wrap;max-height:180px;overflow:auto;background:var(--bg);border:1px dashed var(--bd);border-radius:8px;padding:8px;margin-top:8px}
+.pdfchip{display:inline-block;background:var(--oro);color:#17212B;border-radius:20px;padding:3px 10px;font-size:11px;font-weight:600;margin-left:6px;}
+
+/* Estilos del Chat (Markdown y Spinner) */
+.m p { margin: 0 0 8px 0; } .m p:last-child { margin: 0; }
+.m ul, .m ol { margin: 0 0 8px 0; padding-left: 20px; }
+.m li { margin-bottom: 4px; }
+.m strong { font-weight: 600; }
+.m em { font-style: italic; }
+.m code { background: rgba(0,0,0,0.1); padding: 2px 4px; border-radius: 4px; font-family: monospace; font-size: 13px; }
+:root[data-theme="dark"] .m code { background: rgba(255,255,255,0.1); }
+
+.cite-btn { display:inline-block; background:var(--azul2); color:#fff; border-radius:4px; padding:0 4px; font-size:11px; cursor:pointer; font-weight:bold; margin:0 2px; text-decoration:none;}
+.cite-btn:hover { opacity: 0.8; }
+
+.typing-indicator { display: flex; gap: 4px; align-items: center; padding: 4px 8px; }
+.typing-indicator span { width: 6px; height: 6px; background-color: var(--mut); border-radius: 50%; animation: bounce 1.4s infinite ease-in-out both; }
+.typing-indicator span:nth-child(1) { animation-delay: -0.32s; }
+.typing-indicator span:nth-child(2) { animation-delay: -0.16s; }
+@keyframes bounce { 0%, 80%, 100% { transform: scale(0); } 40% { transform: scale(1); } }
+
+/* Píldoras de sugerencia (Quick Prompts) */
+#quick-prompts { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
+.quick-prompt { background: var(--bg); border: 1px solid var(--bd); color: var(--tx); padding: 8px 12px; border-radius: 20px; font-size: 12px; cursor: pointer; transition: all 0.2s; text-align: left;}
+.quick-prompt:hover { border-color: var(--azul2); background: var(--ia); }
 </style>
 </head>
 <body>
-<header><div><h1>Tutor Socrático · Finanzas y Economía</h1>
-<small>AmatIA LabX · Proyecto personal del Mtro. José Alfredo Ávila de la Rosa</small></div><div class="hr"><button class="hb hide" id="hchip"></button><button class="hb" id="hAcc">Acceso docente</button></div></header>
+<header>
+  <div><h1>Tutor Socrático · Finanzas y Economía</h1>
+  <small>AmatIA LabX · Mtro. José Alfredo Ávila de la Rosa</small></div>
+  <div class="hr">
+    <button class="hb hide" id="hchip"></button>
+    <button class="hb" id="themeToggle" title="Cambiar tema">🌙 Modo</button>
+    <button class="hb" id="hAcc">Acceso docente</button>
+  </div>
+</header>
 <main>
 
 <section id="offb" class="card hide" style="border-color:#B3261E"><b>Estás usando una copia descargada.</b> Este recurso funciona sin Claude.ai, pero necesitas conexión a internet para la IA (Puter.js).</section>
 <section id="tpanel" class="card hide"><label for="pw">Contraseña maestra (docente)</label><input id="pw" type="password" autocomplete="off"><div class="row" style="margin-top:8px"><button id="goA">Entrar como docente</button></div><p id="tmsg" class="mut"></p></section>
 <section id="gate" class="card">
 <h2 style="margin-top:0">Acceso</h2>
-<p class="mut">Aviso de privacidad: tu matrícula se valida localmente contra la lista publicada por el docente. A la IA nunca se le envía tu nombre ni tu matrícula. Tus conversaciones permanecen en tu navegador hasta que descargues tu reporte.</p>
+<p class="mut" style="line-height:1.5;">Aviso de privacidad: tu matrícula se valida localmente contra la lista publicada por el docente. A la IA nunca se le envía tu nombre ni tu matrícula. Tus conversaciones permanecen en tu navegador hasta que descargues tu reporte.</p>
 <label for="mat">Matrícula</label><input id="mat" inputmode="numeric" autocomplete="off">
 <div class="row" style="margin-top:10px"><button id="go">Entrar</button></div>
 <p id="gmsg" class="mut"></p>
@@ -64,21 +104,34 @@ button.hb{background:transparent;border:1px solid #D9C7A3;color:#F3EBDD;padding:
 <option value="clasico">Diálogo socrático clásico</option><option value="abogado">Abogado del diablo</option><option value="caso">Caso financiero con dilema</option><option value="premortem">Pre-mortem de una decisión</option><option value="feynman">Enséñale al tutor (Feynman)</option></select></div></div>
 <label for="obj">Objetivo de aprendizaje y notas del docente (opcional)</label><textarea id="obj" rows="2"></textarea>
 <label for="pdf2">Material de estudio (PDF del tema, opcional)</label><input type="file" id="pdf2" accept="application/pdf">
-<p class="mut" id="smsg">Sin PDF cargado.</p>
+<p class="mut" id="smsg" style="margin-top:4px;">Sin PDF cargado.</p>
 <div class="row hide" id="pdfInfo2" style="margin-top:6px"><span class="pill" id="pdfName2"></span><button class="s" id="rmPdf">Quitar PDF</button></div>
-<div class="row" style="margin-top:10px"><button id="start">Iniciar sesión</button></div>
+<div class="row" style="margin-top:16px"><button id="start" style="font-size:16px; padding:12px 20px;">Iniciar sesión</button></div>
 </div>
-<div class="card hide" id="sess">
-<div id="chat" aria-live="polite"></div>
-<div class="row" style="margin-top:8px"><textarea id="inp" rows="2" placeholder="Escribe tu razonamiento…"></textarea>
-<button id="send">Enviar</button><button class="s" id="hint">Pista</button><button class="s" id="end">Cerrar sesión</button><button class="s" id="newS">Nueva sesión</button></div>
-<p class="mut" id="stat"></p>
+<div class="card hide" id="sess" style="padding:0; overflow:hidden;">
+  <div id="chat" aria-live="polite"></div>
+  <div id="quick-prompts" class="hide" style="padding:0 16px 16px 16px;">
+    <button class="quick-prompt" data-prompt="No entiendo el concepto principal del material. ¿Me lo explicas paso a paso?">🤔 No entiendo el concepto principal</button>
+    <button class="quick-prompt" data-prompt="Dame un ejemplo real y práctico de lo que dice el material.">💡 Dame un ejemplo práctico</button>
+    <button class="quick-prompt" data-prompt="¿Cuáles son los supuestos clave y qué pasaría si cambiamos uno?">🔄 ¿Qué pasa si cambiamos un supuesto?</button>
+  </div>
+  <div class="row" style="padding:12px; background:var(--card); border-top:1px solid var(--bd); margin:0;">
+    <textarea id="inp" rows="2" placeholder="Escribe tu razonamiento…" style="flex:1;"></textarea>
+    <div style="display:flex; flex-direction:column; gap:6px; flex:0 0 auto;">
+      <button id="send" style="padding:10px 20px;">Enviar</button>
+      <div style="display:flex; gap:6px;">
+        <button class="s" id="hint" style="padding:6px 10px; font-size:12px; flex:1;">Pista</button>
+        <button class="s" id="end" style="padding:6px 10px; font-size:12px; flex:1;">Cerrar</button>
+      </div>
+    </div>
+  </div>
+  <p class="mut" id="stat" style="padding:0 16px 12px 16px; margin:0;"></p>
 </div>
 <div class="card hide" id="refl"><h3 style="margin-top:0">Metacognición</h3>
 <label for="r1">¿Qué aprendiste hoy?</label><textarea id="r1" rows="2"></textarea>
 <label for="r2">¿Qué sigue confundiéndote?</label><textarea id="r2" rows="2"></textarea>
 <label for="r3">Confianza en tu comprensión: <b id="r3v">3</b>/5</label><input id="r3" type="range" min="1" max="5" value="3">
-<div class="row" style="margin-top:10px"><button id="fin">Generar retroalimentación y reporte</button></div></div>
+<div class="row" style="margin-top:16px"><button id="fin">Generar retroalimentación y reporte</button></div></div>
 </div>
 
 <div id="p-bit" class="hide">
@@ -90,23 +143,23 @@ button.hb{background:transparent;border:1px solid #D9C7A3;color:#F3EBDD;padding:
 <div class="card"><div class="row"><button class="s" data-f="**">Negrita</button><button class="s" data-f="*">Cursiva</button><button class="s" data-f="# ">Título</button><button class="s" data-f="- ">Lista</button><button class="s" id="ins">Insertar transcripción</button></div>
 <label for="nt">Editor Markdown</label><textarea id="nt" rows="9"></textarea>
 <label>Vista previa</label><div id="prev"></div>
-<div class="row" style="margin-top:10px"><button id="sMd">Guardar .md</button><button id="sPdf">Guardar PDF</button></div></div></div>
+<div class="row" style="margin-top:16px"><button id="sMd">Guardar .md</button><button id="sPdf">Guardar PDF</button></div></div></div>
 
 <div id="p-rep" class="hide"><div class="card"><h3 style="margin-top:0">Reporte de interacciones</h3><div id="repv" class="mut">Aún no hay sesión.</div>
-<div class="row" style="margin-top:10px"><button id="rPdf">Descargar PDF (para Classroom/Canvas)</button><button class="s" id="rMd">Descargar .md</button></div></div></div>
+<div class="row" style="margin-top:16px"><button id="rPdf">Descargar PDF (para Classroom/Canvas)</button><button class="s" id="rMd">Descargar .md</button></div></div></div>
 
 <div id="p-doc" class="hide"><div class="card"><h3 style="margin-top:0">Panel docente (auditoría)</h3>
-<details class="mut" style="margin-bottom:8px"><summary>Cómo publicar y compartir el recurso con alumnos</summary><ol><li>Configura el periodo y las materias.</li><li>Carga la lista de alumnos (CSV/TXT). Se guarda localmente en tu navegador (IndexedDB).</li><li>Pulsa <b>"Publicar lista para alumnos"</b>: se descargará un archivo <code>tutor-publicado.html</code> con los hashes embebidos.</li><li>Comparte ese archivo con tus alumnos (por Classroom, Canvas, correo o USB). Ellos solo escriben su matrícula para entrar.</li><li>La IA funciona con Puter.js (sin API key). Los alumnos necesitan conexión a internet.</li></ol></details>
+<details class="mut" style="margin-bottom:8px"><summary>Cómo publicar y compartir el recurso con alumnos</summary><ol><li>Configura el periodo y las materias.</li><li>Carga la lista de alumnos (CSV/TXT). Se guarda localmente en tu navegador (IndexedDB).</li><li>Pulsa <b>"Publicar lista para alumnos"</b>: se descargará un archivo <code>tutor-publicado.html</code> con los hashes embebidos.</li><li>Sube ese archivo a GitHub Pages como <code>index.html</code>.</li><li>La IA funciona con Puter.js (sin API key). Los alumnos necesitan conexión a internet.</li></ol></details>
 <h4>Lista de clase <span id="cnt" class="pill">0</span></h4>
 <div class="row"><input id="fq" placeholder="Buscar matrícula o nombre"><button class="s" id="exp">Exportar CSV</button></div>
 <div style="overflow-x:auto"><table id="tb" style="width:100%;border-collapse:collapse;font-size:13px"></table></div>
 <h4>Agregar alumno</h4>
-<div class="row"><input id="am" placeholder="Matrícula" inputmode="numeric"><input id="an" placeholder="Nombre (opcional)"><input id="aw" placeholder="Motivo (p. ej. alta extemporánea)"><button id="add">Agregar</button></div>
+<div class="row"><input id="am" placeholder="Matrícula" inputmode="numeric"><input id="an" placeholder="Nombre (opcional)"><input id="aw" placeholder="Motivo (opcional)"><button id="add">Agregar</button></div>
 <label for="csv">Cargar lista (CSV o TXT)</label><input type="file" id="csv" accept=".csv,.txt">
 <div id="pv" class="card hide" style="border-color:var(--oro);margin-top:8px"><b id="pvt"></b><div style="overflow-x:auto;max-height:220px;margin-top:6px"><table id="pvtb" style="width:100%;font-size:12px"></table></div><div class="row" style="margin-top:8px"><button id="pvok">Confirmar y guardar</button><button class="s" id="pvno">Cancelar</button></div></div>
 <div id="dmsg" class="card" style="margin:8px 0" role="status">Sin cambios todavía.</div>
 <div class="row"><button id="publish">Publicar lista para alumnos (descargar HTML)</button></div>
-<div class="row" style="margin-top:6px"><button class="s" id="vfy">Verificar lista guardada</button><input id="tm" placeholder="Probar una matrícula" inputmode="numeric"><button class="s" id="tmb">Probar acceso</button></div>
+<div class="row" style="margin-top:6px"><button class="s" id="vfy">Verificar lista guardada</button><input id="tm" placeholder="Probar matrícula" inputmode="numeric"><button class="s" id="tmb">Probar acceso</button></div>
 <div class="mut" style="margin-top:6px">Diagnóstico interno:</div>
 <div id="dbg">—</div>
 <h4>Materias y periodo del semestre</h4>
@@ -143,8 +196,24 @@ const S = {
 };
 const PS = 'amatia-labx-v2';
 const DB_NAME = 'amatia-tutor';
-const DB_VER = 2;                 // subimos versión para el nuevo objectStore 'pdf'
-const MAX_CTX_CHARS = 28000;      // ≈ 7k tokens
+const DB_VER = 2;
+const MAX_CTX_CHARS = 28000;
+
+/* ======================= TEMA (MODO OSCURO/CLARO) ======================= */
+const themeToggle = $('#themeToggle');
+const currentTheme = localStorage.getItem('theme');
+if (currentTheme) {
+  document.documentElement.setAttribute('data-theme', currentTheme);
+  themeToggle.textContent = currentTheme === 'dark' ? '☀️ Modo' : '🌙 Modo';
+}
+themeToggle.onclick = () => {
+  const isDark = document.documentElement.getAttribute('data-theme') === 'dark' || 
+                 (!document.documentElement.getAttribute('data-theme') && window.matchMedia('(prefers-color-scheme: dark)').matches);
+  const newTheme = isDark ? 'light' : 'dark';
+  document.documentElement.setAttribute('data-theme', newTheme);
+  localStorage.setItem('theme', newTheme);
+  themeToggle.textContent = newTheme === 'dark' ? '☀️ Modo' : '🌙 Modo';
+};
 
 /* ======================= DIAGNÓSTICO ======================= */
 function dbg(msg) {
@@ -225,7 +294,7 @@ function getRoster() {
   return Array.isArray(window.__ROSTER__) ? window.__ROSTER__ : null;
 }
 
-/* ======================= ENTRADA ALUMNOS / DOCENTE ======================= */
+/* ======================= ENTRADA ======================= */
 function enter() {
   $('#gate').classList.add('hide');
   $('#tpanel').classList.add('hide');
@@ -238,7 +307,7 @@ function adminUI() {
   $('#tDoc').classList.toggle('hide', !S.admin);
   $('#hchip').classList.toggle('hide', !S.admin);
   $('#tb2').classList.toggle('hide', !S.test);
-  $('#hAcc').textContent = S.admin ? 'Cerrar acceso docente' : 'Acceso docente';
+  $('#hAcc').textContent = S.admin ? 'Cerrar acceso' : 'Acceso docente';
   if (S.admin) loadStaff();
 }
 
@@ -270,15 +339,10 @@ document.querySelectorAll('nav button').forEach(b => b.onclick = () => {
   if (b.dataset.t === 'doc') audit();
 });
 
-/* ======================= CONSTRUCCIÓN DE CONTEXTO (GROUNDING) ======================= */
-/* Estrategia: si el PDF cabe completo, enviarlo. Si no, seleccionar páginas por coincidencia
-   de términos con el mensaje/tema + vecinas. Siempre con marcadores [p.N]. */
+/* ======================= CONSTRUCCIÓN DE CONTEXTO ======================= */
 function buildContext(query) {
   if (!S.pdfPages || !S.pdfPages.length) return '';
-  const full = S.pdfPages
-    .filter(p => p.text.length > 20)
-    .map(p => `[p.${p.page}] ${p.text}`)
-    .join('\n\n');
+  const full = S.pdfPages.filter(p => p.text.length > 20).map(p => `[p.${p.page}] ${p.text}`).join('\n\n');
   if (full.length <= MAX_CTX_CHARS) return full;
   const terms = (query || S.p.tema || '').toLowerCase().split(/\W+/).filter(w => w.length > 3);
   const scored = S.pdfPages.map(p => {
@@ -293,10 +357,7 @@ function buildContext(query) {
     if (p.page > 1) pages.add(p.page - 1);
     if (p.page < S.pdfPages.length) pages.add(p.page + 1);
   });
-  return [...pages].sort((a, b) => a - b)
-    .map(n => `[p.${n}] ${S.pdfPages[n - 1].text}`)
-    .join('\n\n')
-    .slice(0, MAX_CTX_CHARS);
+  return [...pages].sort((a, b) => a - b).map(n => `[p.${n}] ${S.pdfPages[n - 1].text}`).join('\n\n').slice(0, MAX_CTX_CHARS);
 }
 
 /* ======================= TUTOR CON PUTER.JS ======================= */
@@ -304,9 +365,7 @@ function sys(ctx) {
   const p = S.p;
   const material = ctx
     ? `Material de estudio cargado (basa TODAS tus preguntas y respuestas en él; cita la página entre corchetes, p. ej. [p.3]):\n"""\n${ctx}\n"""`
-    : (S.pdfPages && S.pdfPages.length
-        ? 'Hay un PDF cargado pero el tema/mensaje actual no coincide con su contenido. Pide al alumno que reformule o indique la sección.'
-        : 'No hay material de estudio cargado.');
+    : (S.pdfPages && S.pdfPages.length ? 'Hay un PDF cargado pero el tema/mensaje actual no coincide con su contenido. Pide al alumno que reformule o indique la sección.' : 'No hay material de estudio cargado.');
   return `Eres el Tutor Socrático AmatIA LabX para finanzas y economía. Materia: ${p.materia}. Tema: ${p.tema}. Nivel: ${p.nivel}. Objetivos/notas del docente: ${p.obj || 'ninguno'}. Modo: ${MODOS[p.modo]}
 ${material}
 REGLAS DE GROUNDING (obligatorias):
@@ -319,17 +378,51 @@ Reglas generales: responde en español, máx. 110 palabras, UNA sola pregunta po
 Termina SIEMPRE con una última línea exacta: ##META bloom=<1-6> estandar=<estándar evaluado> ayuda=<0-4>`;
 }
 
+/* Formateador Markdown básico para el Chat */
+function formatMD(text) {
+  let html = esc(text);
+  // Citas [p.X] a botones
+  html = html.replace(/\[p\.(\d+)\]/g, '<a class="cite-btn" data-page="$1" href="javascript:void(0)">[p.$1]</a>');
+  // Negritas
+  html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+  // Cursivas
+  html = html.replace(/\*(.+?)\*/g, '<em>$1</em>');
+  // Listas
+  html = html.replace(/^\s*-\s+(.+)$/gm, '<li>$1</li>');
+  html = html.replace(/(<li>.*<\/li>)/s, '<ul>$1</ul>');
+  // Saltos de línea
+  html = html.replace(/\n/g, '<br>');
+  return html;
+}
+
 function bub(c, t) {
   const d = document.createElement('div');
-  d.className = 'm ' + c; d.textContent = t;
-  $('#chat').appendChild(d); $('#chat').scrollTop = 1e9;
+  d.className = 'm ' + c; 
+  d.innerHTML = (c === 'ia') ? formatMD(t) : esc(t);
+  $('#chat').appendChild(d); 
+  $('#chat').scrollTop = 1e9;
+  
+  // Hacer clicables las citas del PDF
+  if (c === 'ia') {
+    d.querySelectorAll('.cite-btn').forEach(btn => {
+      btn.onclick = () => {
+        const page = parseInt(btn.dataset.page);
+        document.querySelector('[data-t=bit]').click();
+        setTimeout(() => {
+          const target = document.getElementById('pg-' + page);
+          if (target) target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }, 100);
+      };
+    });
+  }
   return d;
 }
+
 function strip(t) { const i = t.indexOf('##META'); return i < 0 ? t.trim() : t.slice(0, i).trim(); }
 function stat() {
   const b = S.meta.map(m => m.bloom).filter(Boolean);
   const chipPdf = S.pdfName ? ` <span class="pdfchip">PDF: ${esc(S.pdfName)}</span>` : '';
-  $('#stat').innerHTML = `Turnos: ${S.msgs.filter(m => m.role === 'user').length} · Ayudas pedidas: ${S.ayuda} · Bloom actual: <span class="pill">${b.length ? BL[b[b.length - 1]] : '—'}</span>${chipPdf}`;
+  $('#stat').innerHTML = `Turnos: ${S.msgs.filter(m => m.role === 'user').length} · Ayudas: ${S.ayuda} · Bloom: <span class="pill">${b.length ? BL[b[b.length - 1]] : '—'}</span>${chipPdf}`;
 }
 
 async function ask(txt) {
@@ -338,9 +431,9 @@ async function ask(txt) {
     return;
   }
   $('#send').disabled = $('#hint').disabled = true;
+  $('#quick-prompts').classList.add('hide');
   S.msgs.push({ role: 'user', content: txt }); stat();
 
-  // ⬇️ Construir contexto y system prompt EN CADA TURNO
   const ctx = buildContext(txt);
   const systemPrompt = sys(ctx);
   const messages = [
@@ -348,30 +441,51 @@ async function ask(txt) {
     ...S.msgs.map(m => ({ role: m.role === 'user' ? 'user' : 'assistant', content: m.content }))
   ];
 
-  const b = bub('ia', 'Pensando…');
+  // Burbuja de "Pensando" con animación
+  const b = bub('ia', '');
+  b.innerHTML = '<div class="typing-indicator"><span></span><span></span><span></span></div>';
+
   try {
     const response = await puter.ai.chat(messages, { model: 'gpt-5-nano', stream: false });
     let text = '';
     if (typeof response === 'string') text = response;
     else if (response?.message?.content) {
-      text = Array.isArray(response.message.content)
-        ? response.message.content.map(c => c.text || '').join('')
-        : response.message.content;
+      text = Array.isArray(response.message.content) ? response.message.content.map(c => c.text || '').join('') : response.message.content;
     } else if (response?.text) text = response.text;
     else text = String(response);
 
-    b.textContent = strip(text);
+    b.innerHTML = formatMD(strip(text));
+    // Re-asignar eventos a las citas
+    b.querySelectorAll('.cite-btn').forEach(btn => {
+      btn.onclick = () => {
+        const page = parseInt(btn.dataset.page);
+        document.querySelector('[data-t=bit]').click();
+        setTimeout(() => {
+          const target = document.getElementById('pg-' + page);
+          if (target) target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }, 100);
+      };
+    });
+
     S.msgs.push({ role: 'assistant', content: text });
     const m = text.match(/##META\s+bloom=(\d)\s+estandar=([^\n]*?)\s+ayuda=(\d)/);
     S.meta.push(m ? { bloom: +m[1], est: m[2].trim(), ay: +m[3] } : {});
     stat();
   } catch (e) {
-    b.textContent = 'No pude responder (' + (e.message || e) + '). Intenta de nuevo.';
+    b.innerHTML = 'No pude responder (' + esc(e.message || e) + '). Intenta de nuevo.';
     S.msgs.pop();
     dbg('Puter error: ' + (e.message || e));
   }
   $('#send').disabled = $('#hint').disabled = false;
 }
+
+/* Eventos del Chat */
+document.querySelectorAll('.quick-prompt').forEach(btn => {
+  btn.onclick = () => {
+    $('#inp').value = btn.dataset.prompt;
+    $('#send').click();
+  };
+});
 
 $('#start').onclick = () => {
   const g = i => $('#' + i).value.trim();
@@ -382,6 +496,7 @@ $('#start').onclick = () => {
   S.p = { materia: g('materia'), tema: g('tema'), nivel: $('#nivel').value, modo: $('#modo').value, obj: g('obj') };
   S.msgs = []; S.meta = []; S.ayuda = 0; S.t0 = new Date(); $('#chat').innerHTML = '';
   $('#setup').classList.add('hide'); $('#sess').classList.remove('hide');
+  $('#quick-prompts').classList.remove('hide');
   ask('Inicia la sesión con tu primera pregunta o propuesta.');
 };
 $('#send').onclick = () => { const t = $('#inp').value.trim(); if (!t) return; $('#inp').value = ''; bub('us', t); ask(t); };
@@ -507,8 +622,7 @@ function parseStudents(text) {
       if (/[A-Za-zÁÉÍÓÚÑáéíóúñ]/.test(cand) && !/^https?:/i.test(cand)) nombre = cand;
     }
     if (!nombre) {
-      nombre = cs.filter(x => /[A-Za-zÁÉÍÓÚÑáéíóúñ]/.test(x) && !/^https?:/i.test(x) && !/^\d{1,3}$/.test(x))
-        .sort((a, b) => b.length - a.length)[0] || '';
+      nombre = cs.filter(x => /[A-Za-zÁÉÍÓÚÑáéíóúñ]/.test(x) && !/^https?:/i.test(x) && !/^\d{1,3}$/.test(x)).sort((a, b) => b.length - a.length)[0] || '';
     }
     seen.add(mat);
     out.push({ m: mat, n: nombre.replace(/\s+/g, ' ').trim() });
@@ -516,7 +630,7 @@ function parseStudents(text) {
   return out;
 }
 
-/* ======================= VISOR PDF + EXTRACCIÓN ESTRUCTURADA ======================= */
+/* ======================= VISOR PDF ======================= */
 pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
 let tool = 'view', zoom = 100; const pgs = [];
 function setTool(t) {
@@ -553,11 +667,11 @@ async function loadPdf(f) {
     const doc = await pdfjsLib.getDocument({ data: buf.slice(0) }).promise;
     const box = $('#pages'); box.innerHTML = ''; pgs.length = 0;
 
-    // ⬇️ Extracción estructurada por páginas
     S.pdfPages = [];
     for (let i = 1; i <= doc.numPages; i++) {
       const p = await doc.getPage(i), vp = p.getViewport({ scale: 1.6 });
       const el = document.createElement('div'); el.className = 'pg'; el.style.width = zoom + '%';
+      el.id = 'pg-' + i; // ID para saltos de página
       const cv = document.createElement('canvas'), ov = document.createElement('canvas');
       cv.width = ov.width = vp.width; cv.height = ov.height = vp.height;
       ov.className = 'ink'; ov.style.width = '100%'; ov.style.height = '100%';
@@ -571,25 +685,22 @@ async function loadPdf(f) {
     setTool('view');
     ['#pages', '#vtools', '#vsave'].forEach(s => $(s).classList.remove('hide'));
 
-    // Indicadores en setup y sesión
     const badge = S.pdfPages.length + ' págs · ' + S.ctx.length + ' chars';
     if (S.ctx.length < 200) {
-      m('⚠ Este PDF no tiene texto extraíble (probablemente escaneado). El tutor no podrá basarse en él. Usa un PDF con texto.');
+      m('⚠ Este PDF no tiene texto extraíble (probablemente escaneado). El tutor no podrá basarse en él.');
     } else {
-      m(`PDF cargado: ${f.name} (${badge}). El tutor lo usará como base y citará páginas [p.N].`);
+      m(`PDF cargado: ${f.name} (${badge}). El tutor lo usará como base.`);
     }
     $('#pdfName2').textContent = f.name + ' · ' + badge;
     $('#pdfInfo2').classList.remove('hide');
-    $('#stat').innerHTML += ''; stat();
+    stat();
 
-    // Cachear en IndexedDB
     try { await idbPut('pdf', { id: 'material', name: f.name, pages: S.pdfPages, at: Date.now() }); } catch (e) { dbg('cache pdf error: ' + (e.message || e)); }
   } catch (e) { m('No pude abrir el PDF: ' + (e.message || e)); dbg('loadPdf error: ' + (e.message || e)); }
 }
 $('#pdf1').onchange = e => loadPdf(e.target.files[0]);
 $('#pdf2').onchange = e => loadPdf(e.target.files[0]);
 
-/* Quitar PDF */
 $('#rmPdf').onclick = async () => {
   S.pdfName = ''; S.pdfBytes = null; S.pdfPages = []; S.ctx = '';
   $('#smsg').textContent = 'PDF quitado. El tutor ya no usará material.';
@@ -599,13 +710,12 @@ $('#rmPdf').onclick = async () => {
   stat();
 };
 
-/* Restaurar PDF desde cache al entrar */
 async function restorePdfFromCache() {
   try {
     const cached = await idbGet('pdf', 'material');
     if (cached && cached.pages && cached.pages.length) {
       S.pdfName = cached.name; S.pdfPages = cached.pages; S.ctx = buildContext('');
-      $('#smsg').textContent = `PDF restaurado de caché: ${cached.name} (${cached.pages.length} págs · ${S.ctx.length} chars).`;
+      $('#smsg').textContent = `PDF restaurado de caché: ${cached.name} (${cached.pages.length} págs).`;
       $('#pdfName2').textContent = cached.name + ' · ' + cached.pages.length + ' págs';
       $('#pdfInfo2').classList.remove('hide');
       stat();
@@ -634,6 +744,7 @@ $('#newS').onclick = async () => {
   S.msgs = []; S.meta = []; S.ayuda = 0; S.refl = null; S.fb = ''; S.t0 = null;
   $('#chat').innerHTML = ''; $('#r1').value = $('#r2').value = '';
   $('#refl').classList.add('hide'); $('#sess').classList.add('hide'); $('#setup').classList.remove('hide');
+  $('#quick-prompts').classList.add('hide');
 };
 $('#rv').onchange = async e => {
   $('#rvo').innerHTML = '';
@@ -741,7 +852,7 @@ $('#tmb').onclick = async () => {
   note(exists ? '✓ La matrícula ' + m + ' está en la lista local.' : '✗ La matrícula ' + m + ' NO está en la lista local.', !!exists);
 };
 
-/* ======================= PUBLICAR LISTA PARA ALUMNOS ======================= */
+/* ======================= PUBLICAR LISTA ======================= */
 $('#publish').onclick = async () => {
   if (!ST.students.length) { note('✗ No hay alumnos en la lista. Carga o agrega alumnos primero.', false); return; }
   note('Generando archivo publicado…');
@@ -754,7 +865,7 @@ $('#publish').onclick = async () => {
     const inject = `<script>window.__ROSTER__ = ${JSON.stringify(hashes)};<\/script>`;
     html = html.replace('</head>', inject + '</head>');
     descargar('tutor-publicado.html', new Blob([html], { type: 'text/html;charset=utf-8' }));
-    note('✓ Archivo tutor-publicado.html descargado. Compártelo con tus alumnos.', true);
+    note('✓ Archivo tutor-publicado.html descargado. Súbelo a GitHub Pages.', true);
     dbg('publish(): hashes=' + hashes.length + ' html size=' + html.length);
   } catch (e) {
     dbg('publish() error: ' + (e.message || e));
@@ -775,7 +886,7 @@ function toast(m, persist) {
   if (!t) {
     t = document.createElement('div');
     t.id = 'toast'; t.setAttribute('role', 'alert');
-    t.style.cssText = 'position:fixed;left:12px;right:12px;bottom:calc(12px + env(safe-area-inset-bottom,0px));max-width:560px;margin:auto;background:#3A2A1E;color:#F3EBDD;border:1px solid var(--oro);border-radius:10px;padding:10px 14px;z-index:60;display:none';
+    t.style.cssText = 'position:fixed;left:16px;right:16px;bottom:calc(16px + env(safe-area-inset-bottom,0px));max-width:560px;margin:auto;background:#3A2A1E;color:#F3EBDD;border:1px solid var(--oro);border-radius:10px;padding:12px 16px;z-index:60;display:none;box-shadow:0 10px 25px rgba(0,0,0,0.5);font-weight:500;font-size:14px;';
     document.body.appendChild(t);
   }
   t.textContent = m; t.style.display = 'block';
@@ -788,13 +899,13 @@ window.alert = toast;
 function confirmUI(msg, word) {
   return new Promise(res => {
     const o = document.createElement('div');
-    o.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:70;display:flex;align-items:center;justify-content:center;padding:16px';
+    o.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.6);backdrop-filter:blur(4px);z-index:70;display:flex;align-items:center;justify-content:center;padding:16px';
     const b = document.createElement('div');
-    b.className = 'card'; b.style.cssText = 'max-width:440px;width:100%;margin:0';
+    b.className = 'card'; b.style.cssText = 'max-width:440px;width:100%;margin:0;box-shadow:0 20px 40px rgba(0,0,0,0.4);';
     const p = document.createElement('p'); p.style.whiteSpace = 'pre-wrap'; p.textContent = msg; b.appendChild(p);
     let inp = null;
     if (word) { inp = document.createElement('input'); inp.placeholder = 'Escribe ' + word; b.appendChild(inp); }
-    const r = document.createElement('div'); r.className = 'row'; r.style.marginTop = '10px';
+    const r = document.createElement('div'); r.className = 'row'; r.style.marginTop = '16px';
     const ok = document.createElement('button'), no = document.createElement('button');
     ok.textContent = 'Confirmar'; no.textContent = 'Cancelar'; no.className = 's';
     ok.id = 'cuiOk'; no.id = 'cuiNo';
@@ -914,7 +1025,7 @@ function showPv(rows) {
 }
 
 /* ======================= ARRANQUE ======================= */
-dbg('Recurso iniciado. Sin dependencia de Claude.ai. IA: Puter.js. Grounding PDF activo.');
+dbg('Recurso iniciado. Sin dependencia de Claude.ai. IA: Puter.js.');
 if (typeof puter === 'undefined') {
   $('#offb').classList.remove('hide');
   dbg('ADVERTENCIA: Puter.js no se cargó. La IA no funcionará.');
