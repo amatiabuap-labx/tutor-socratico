@@ -45,7 +45,7 @@ h2,h3,h4{font-family:var(--font-title);margin-top:0;}
 #dbg{font:12px/1.4 ui-monospace,Menlo,monospace;white-space:pre-wrap;max-height:180px;overflow:auto;background:var(--bg);border:1px dashed var(--bd);border-radius:8px;padding:8px;margin-top:8px}
 .pdfchip{display:inline-block;background:var(--oro);color:#17212B;border-radius:20px;padding:3px 10px;font-size:11px;font-weight:600;margin-left:6px;}
 
-/* Estilos del Chat (Markdown y Spinner) */
+/* Chat y Spinner */
 .m p { margin: 0 0 8px 0; } .m p:last-child { margin: 0; }
 .m ul, .m ol { margin: 0 0 8px 0; padding-left: 20px; }
 .m li { margin-bottom: 4px; }
@@ -53,25 +53,30 @@ h2,h3,h4{font-family:var(--font-title);margin-top:0;}
 .m em { font-style: italic; }
 .m code { background: rgba(0,0,0,0.1); padding: 2px 4px; border-radius: 4px; font-family: monospace; font-size: 13px; }
 :root[data-theme="dark"] .m code { background: rgba(255,255,255,0.1); }
-
 .cite-btn { display:inline-block; background:var(--azul2); color:#fff; border-radius:4px; padding:0 4px; font-size:11px; cursor:pointer; font-weight:bold; margin:0 2px; text-decoration:none;}
 .cite-btn:hover { opacity: 0.8; }
-
 .typing-indicator { display: flex; gap: 4px; align-items: center; padding: 4px 8px; }
 .typing-indicator span { width: 6px; height: 6px; background-color: var(--mut); border-radius: 50%; animation: bounce 1.4s infinite ease-in-out both; }
 .typing-indicator span:nth-child(1) { animation-delay: -0.32s; }
 .typing-indicator span:nth-child(2) { animation-delay: -0.16s; }
 @keyframes bounce { 0%, 80%, 100% { transform: scale(0); } 40% { transform: scale(1); } }
-
-/* Píldoras de sugerencia (Quick Prompts) */
 #quick-prompts { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
 .quick-prompt { background: var(--bg); border: 1px solid var(--bd); color: var(--tx); padding: 8px 12px; border-radius: 20px; font-size: 12px; cursor: pointer; transition: all 0.2s; text-align: left;}
 .quick-prompt:hover { border-color: var(--azul2); background: var(--ia); }
+
+/* Panel Docente Bloque 2 */
+.warn-badge { background:#E65100; color:#fff; padding:2px 8px; border-radius:12px; font-size:11px; font-weight:bold; margin-left:8px; cursor:pointer; animation:pulse 2s infinite; }
+@keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
+#qr-container { display:none; text-align:center; background:#fff; padding:16px; border-radius:8px; margin-top:10px; border:1px solid var(--bd); }
+#qr-container img { max-width:200px; margin:0 auto; }
+.stats-box { background:var(--bg); border:1px solid var(--bd); border-radius:8px; padding:12px; margin-top:12px; display:flex; gap:16px; flex-wrap:wrap; }
+.stat-item { font-size:13px; }
+.stat-val { font-size:20px; font-weight:bold; color:var(--azul2); display:block; }
 </style>
 </head>
 <body>
 <header>
-  <div><h1>Tutor Socrático · Finanzas y Economía</h1>
+  <div><h1>Tutor Socrático · Finanzas y Economía <span id="dirty-warn" class="warn-badge hide" title="Haz clic para ir a publicar">⚠️ Cambios sin publicar</span></h1>
   <small>AmatIA LabX · Mtro. José Alfredo Ávila de la Rosa</small></div>
   <div class="hr">
     <button class="hb hide" id="hchip"></button>
@@ -148,29 +153,78 @@ h2,h3,h4{font-family:var(--font-title);margin-top:0;}
 <div id="p-rep" class="hide"><div class="card"><h3 style="margin-top:0">Reporte de interacciones</h3><div id="repv" class="mut">Aún no hay sesión.</div>
 <div class="row" style="margin-top:16px"><button id="rPdf">Descargar PDF (para Classroom/Canvas)</button><button class="s" id="rMd">Descargar .md</button></div></div></div>
 
-<div id="p-doc" class="hide"><div class="card"><h3 style="margin-top:0">Panel docente (auditoría)</h3>
-<details class="mut" style="margin-bottom:8px"><summary>Cómo publicar y compartir el recurso con alumnos</summary><ol><li>Configura el periodo y las materias.</li><li>Carga la lista de alumnos (CSV/TXT). Se guarda localmente en tu navegador (IndexedDB).</li><li>Pulsa <b>"Publicar lista para alumnos"</b>: se descargará un archivo <code>tutor-publicado.html</code> con los hashes embebidos.</li><li>Sube ese archivo a GitHub Pages como <code>index.html</code>.</li><li>La IA funciona con Puter.js (sin API key). Los alumnos necesitan conexión a internet.</li></ol></details>
-<h4>Lista de clase <span id="cnt" class="pill">0</span></h4>
-<div class="row"><input id="fq" placeholder="Buscar matrícula o nombre"><button class="s" id="exp">Exportar CSV</button></div>
-<div style="overflow-x:auto"><table id="tb" style="width:100%;border-collapse:collapse;font-size:13px"></table></div>
-<h4>Agregar alumno</h4>
-<div class="row"><input id="am" placeholder="Matrícula" inputmode="numeric"><input id="an" placeholder="Nombre (opcional)"><input id="aw" placeholder="Motivo (opcional)"><button id="add">Agregar</button></div>
-<label for="csv">Cargar lista (CSV o TXT)</label><input type="file" id="csv" accept=".csv,.txt">
-<div id="pv" class="card hide" style="border-color:var(--oro);margin-top:8px"><b id="pvt"></b><div style="overflow-x:auto;max-height:220px;margin-top:6px"><table id="pvtb" style="width:100%;font-size:12px"></table></div><div class="row" style="margin-top:8px"><button id="pvok">Confirmar y guardar</button><button class="s" id="pvno">Cancelar</button></div></div>
-<div id="dmsg" class="card" style="margin:8px 0" role="status">Sin cambios todavía.</div>
-<div class="row"><button id="publish">Publicar lista para alumnos (descargar HTML)</button></div>
-<div class="row" style="margin-top:6px"><button class="s" id="vfy">Verificar lista guardada</button><input id="tm" placeholder="Probar matrícula" inputmode="numeric"><button class="s" id="tmb">Probar acceso</button></div>
-<div class="mut" style="margin-top:6px">Diagnóstico interno:</div>
-<div id="dbg">—</div>
-<h4>Materias y periodo del semestre</h4>
-<div class="row"><input id="mper" placeholder="Periodo (p. ej. Otoño 2026)"><button class="s" id="mpb">Guardar periodo</button></div>
-<div class="row" style="margin-top:6px"><input id="mnom" placeholder="Nombre de la materia"><button id="mad">Agregar materia</button></div>
-<div id="mlist" style="margin-top:6px"></div>
-<h4>Cierre de semestre</h4><p class="mut">Borra la lista de alumnos y la bitácora de cambios de tu navegador. Exporta antes el CSV si necesitas respaldo.</p>
-<div class="row"><button class="s" id="clsL">Borrar lista de clase</button><button class="s" id="clsM">Borrar materias y periodo</button></div>
-<h4>Bitácora de cambios</h4><div id="lg" class="mut"></div>
-<h4>Revisar reportes de alumnos</h4><p class="mut">Los .md se muestran aquí.</p><input type="file" id="rv" accept=".md,.txt" multiple><div id="rvo"></div>
-<h4>Configuración y mensaje de sistema vigentes</h4><pre id="audit" class="mut"></pre></div></div>
+<div id="p-doc" class="hide">
+<div class="card">
+  <h3 style="margin-top:0">Panel docente (auditoría)</h3>
+  
+  <details class="mut" style="margin-bottom:16px">
+    <summary style="cursor:pointer; font-weight:bold; color:var(--tx); font-size:14px;">💡 Cómo publicar y compartir el recurso con alumnos</summary>
+    <ol style="margin-top:8px; padding-left:20px;">
+      <li>Configura el periodo, materias y las <b>Instrucciones para la IA</b>.</li>
+      <li>Carga la lista de alumnos (CSV/TXT). Se guarda localmente en tu navegador.</li>
+      <li>Pulsa <b>"Publicar lista para alumnos"</b>: se descargará un archivo <code>tutor-publicado.html</code>.</li>
+      <li>Sube ese archivo a GitHub Pages reemplazando tu <code>index.html</code>.</li>
+      <li>Proyecta el <b>Código QR</b> en clase para que los alumnos escaneen y entren.</li>
+    </ol>
+  </details>
+
+  <!-- NUEVO: Generador QR -->
+  <h4>Acceso rápido para alumnos</h4>
+  <div class="row">
+    <button id="qrBtn">📱 Generar Código QR del enlace actual</button>
+  </div>
+  <div id="qr-container">
+    <img id="qr-img" src="" alt="QR Code">
+    <p class="mut" style="margin-top:8px; font-size:11px;">Proyecta este código en clase.</p>
+  </div>
+
+  <h4 style="margin-top:24px;">Lista de clase <span id="cnt" class="pill">0</span></h4>
+  <div class="row"><input id="fq" placeholder="Buscar matrícula o nombre"><button class="s" id="exp">Exportar CSV</button></div>
+  <div style="overflow-x:auto"><table id="tb" style="width:100%;border-collapse:collapse;font-size:13px"></table></div>
+  
+  <h4>Agregar alumno</h4>
+  <div class="row"><input id="am" placeholder="Matrícula" inputmode="numeric"><input id="an" placeholder="Nombre (opcional)"><input id="aw" placeholder="Motivo (opcional)"><button id="add">Agregar</button></div>
+  <label for="csv">Cargar lista (CSV o TXT)</label><input type="file" id="csv" accept=".csv,.txt">
+  <div id="pv" class="card hide" style="border-color:var(--oro);margin-top:8px"><b id="pvt"></b><div style="overflow-x:auto;max-height:220px;margin-top:6px"><table id="pvtb" style="width:100%;font-size:12px"></table></div><div class="row" style="margin-top:8px"><button id="pvok">Confirmar y guardar</button><button class="s" id="pvno">Cancelar</button></div></div>
+  
+  <div id="dmsg" class="card" style="margin:8px 0" role="status">Sin cambios todavía.</div>
+  <div class="row"><button id="publish" style="width:100%; background:var(--oro); color:#000; font-weight:bold;">Publicar lista para alumnos (descargar HTML)</button></div>
+  
+  <div class="row" style="margin-top:12px"><button class="s" id="vfy">Verificar lista</button><input id="tm" placeholder="Probar matrícula" inputmode="numeric"><button class="s" id="tmb">Probar acceso</button></div>
+  <div class="mut" style="margin-top:6px">Diagnóstico interno:</div>
+  <div id="dbg">—</div>
+
+  <h4 style="margin-top:24px;">Materias y periodo del semestre</h4>
+  <div class="row"><input id="mper" placeholder="Periodo (p. ej. Otoño 2026)"><button class="s" id="mpb">Guardar periodo</button></div>
+  <div class="row" style="margin-top:6px"><input id="mnom" placeholder="Nombre de la materia"><button id="mad">Agregar materia</button></div>
+  <div id="mlist" style="margin-top:6px"></div>
+
+  <!-- NUEVO: Editor de Instrucciones de IA -->
+  <h4 style="margin-top:24px;">Instrucciones globales para la IA</h4>
+  <p class="mut" style="margin-bottom:8px;">Escribe aquí instrucciones de comportamiento que se inyectarán a todos los tutores (ej. "Sé muy estricto con las fórmulas", "Pide siempre la fuente bibliográfica").</p>
+  <textarea id="aiRules" rows="3" placeholder="Ej. Enfócate en el análisis numérico y solicita siempre el cálculo exacto."></textarea>
+  <div class="row" style="margin-top:8px"><button class="s" id="saveAIRules">Guardar instrucciones</button></div>
+
+  <h4 style="margin-top:24px;">Revisar y analizar reportes</h4>
+  <p class="mut">Carga los archivos <code>.md</code> de tus alumnos para extraer estadísticas grupales.</p>
+  <input type="file" id="rv" accept=".md,.txt" multiple style="margin-bottom:12px;">
+  
+  <div id="group-stats" class="stats-box hide">
+    <div class="stat-item">Alumnos evaluados <span class="stat-val" id="st-count">0</span></div>
+    <div class="stat-item">Bloom Promedio <span class="stat-val" id="st-avg">0.0</span></div>
+    <div class="stat-item">Bloom Máximo <span class="stat-val" id="st-max">0</span></div>
+  </div>
+
+  <div id="rvo" style="margin-top:12px;"></div>
+
+  <h4 style="margin-top:24px;">Cierre de semestre</h4>
+  <p class="mut">Borra la lista de alumnos y la bitácora de cambios de tu navegador. Exporta antes el CSV si necesitas respaldo.</p>
+  <div class="row"><button class="s" id="clsL">Borrar lista de clase</button><button class="s" id="clsM">Borrar materias y periodo</button></div>
+  
+  <h4 style="margin-top:24px;">Configuración y mensaje de sistema vigentes</h4>
+  <pre id="audit" class="mut" style="font-size:11px;"></pre>
+</div>
+</div>
 </section>
 </main>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -196,10 +250,10 @@ const S = {
 };
 const PS = 'amatia-labx-v2';
 const DB_NAME = 'amatia-tutor';
-const DB_VER = 2;
+const DB_VER = 3; // Subimos versión para la nueva tabla 'settings'
 const MAX_CTX_CHARS = 28000;
 
-/* ======================= TEMA (MODO OSCURO/CLARO) ======================= */
+/* ======================= TEMA ======================= */
 const themeToggle = $('#themeToggle');
 const currentTheme = localStorage.getItem('theme');
 if (currentTheme) {
@@ -256,6 +310,7 @@ function openDB() {
       if (!db.objectStoreNames.contains('staff')) db.createObjectStore('staff', { keyPath: 'id' });
       if (!db.objectStoreNames.contains('materias')) db.createObjectStore('materias', { keyPath: 'id' });
       if (!db.objectStoreNames.contains('pdf')) db.createObjectStore('pdf', { keyPath: 'id' });
+      if (!db.objectStoreNames.contains('settings')) db.createObjectStore('settings', { keyPath: 'id' });
     };
     req.onsuccess = e => { idb = e.target.result; resolve(idb); };
     req.onerror = e => reject(e.target.error);
@@ -301,6 +356,7 @@ function enter() {
   $('#app').classList.remove('hide');
   adminUI();
   loadMaterias();
+  loadAIRules();
   restorePdfFromCache();
 }
 function adminUI() {
@@ -363,11 +419,15 @@ function buildContext(query) {
 /* ======================= TUTOR CON PUTER.JS ======================= */
 function sys(ctx) {
   const p = S.p;
+  const aiRules = window.__AI_RULES__ || 'Ninguna instrucción adicional.';
   const material = ctx
     ? `Material de estudio cargado (basa TODAS tus preguntas y respuestas en él; cita la página entre corchetes, p. ej. [p.3]):\n"""\n${ctx}\n"""`
     : (S.pdfPages && S.pdfPages.length ? 'Hay un PDF cargado pero el tema/mensaje actual no coincide con su contenido. Pide al alumno que reformule o indique la sección.' : 'No hay material de estudio cargado.');
+  
   return `Eres el Tutor Socrático AmatIA LabX para finanzas y economía. Materia: ${p.materia}. Tema: ${p.tema}. Nivel: ${p.nivel}. Objetivos/notas del docente: ${p.obj || 'ninguno'}. Modo: ${MODOS[p.modo]}
 ${material}
+INSTRUCCIONES GLOBALES DEL DOCENTE (obligatorias):
+${aiRules}
 REGLAS DE GROUNDING (obligatorias):
 - Si hay material cargado, TODA pregunta y respuesta debe basarse en él.
 - Cita la página entre corchetes: [p.3], [p.7-8].
@@ -378,19 +438,14 @@ Reglas generales: responde en español, máx. 110 palabras, UNA sola pregunta po
 Termina SIEMPRE con una última línea exacta: ##META bloom=<1-6> estandar=<estándar evaluado> ayuda=<0-4>`;
 }
 
-/* Formateador Markdown básico para el Chat */
+/* Formateador Markdown básico */
 function formatMD(text) {
   let html = esc(text);
-  // Citas [p.X] a botones
   html = html.replace(/\[p\.(\d+)\]/g, '<a class="cite-btn" data-page="$1" href="javascript:void(0)">[p.$1]</a>');
-  // Negritas
   html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
-  // Cursivas
   html = html.replace(/\*(.+?)\*/g, '<em>$1</em>');
-  // Listas
   html = html.replace(/^\s*-\s+(.+)$/gm, '<li>$1</li>');
   html = html.replace(/(<li>.*<\/li>)/s, '<ul>$1</ul>');
-  // Saltos de línea
   html = html.replace(/\n/g, '<br>');
   return html;
 }
@@ -402,7 +457,6 @@ function bub(c, t) {
   $('#chat').appendChild(d); 
   $('#chat').scrollTop = 1e9;
   
-  // Hacer clicables las citas del PDF
   if (c === 'ia') {
     d.querySelectorAll('.cite-btn').forEach(btn => {
       btn.onclick = () => {
@@ -441,7 +495,6 @@ async function ask(txt) {
     ...S.msgs.map(m => ({ role: m.role === 'user' ? 'user' : 'assistant', content: m.content }))
   ];
 
-  // Burbuja de "Pensando" con animación
   const b = bub('ia', '');
   b.innerHTML = '<div class="typing-indicator"><span></span><span></span><span></span></div>';
 
@@ -455,7 +508,6 @@ async function ask(txt) {
     else text = String(response);
 
     b.innerHTML = formatMD(strip(text));
-    // Re-asignar eventos a las citas
     b.querySelectorAll('.cite-btn').forEach(btn => {
       btn.onclick = () => {
         const page = parseInt(btn.dataset.page);
@@ -479,7 +531,6 @@ async function ask(txt) {
   $('#send').disabled = $('#hint').disabled = false;
 }
 
-/* Eventos del Chat */
 document.querySelectorAll('.quick-prompt').forEach(btn => {
   btn.onclick = () => {
     $('#inp').value = btn.dataset.prompt;
@@ -574,10 +625,11 @@ $('#sPdf').onclick = () => descargar(`bitacora-${stamp()}.pdf`, pdf('Bitácora d
 
 /* ======================= AUDITORÍA ======================= */
 function audit() {
+  const aiRules = window.__AI_RULES__ || 'Ninguna.';
   $('#audit').textContent = (S.p.materia ? sys(buildContext('')) : (() => {
     S.p = { materia: '(materia)', tema: '(tema)', nivel: '(nivel)', modo: 'clasico', obj: '' };
     const r = sys(buildContext('')); S.p = {}; return r;
-  })()) + '\n\nConfiguración vigente mostrada arriba.\n\nModos disponibles:\n' + Object.values(MODOS).join('\n') + '\n\nBloom: ' + BL.slice(1).join(' > ') + '\nConversaciones: se almacenan solo en el navegador de cada alumno; el docente las recibe en el PDF entregado en Classroom/Canvas.\n\nIA: Puter.js (modelo gpt-5-nano, sin API key).';
+  })()) + '\n\nConfiguración vigente mostrada arriba.\n\nModos disponibles:\n' + Object.values(MODOS).join('\n') + '\n\nBloom: ' + BL.slice(1).join(' > ') + '\nConversaciones: se almacenan solo en el navegador de cada alumno.\n\nIA: Puter.js (modelo gpt-5-nano).\nInstrucciones globales: ' + aiRules;
   const r = getRoster();
   if ($('#dmsg').textContent.startsWith('Sin cambios'))
     note(r ? 'Lista de acceso activa: ' + r.length + ' matrículas habilitadas.' : 'No hay lista de acceso embebida en esta copia.', !!r);
@@ -671,7 +723,7 @@ async function loadPdf(f) {
     for (let i = 1; i <= doc.numPages; i++) {
       const p = await doc.getPage(i), vp = p.getViewport({ scale: 1.6 });
       const el = document.createElement('div'); el.className = 'pg'; el.style.width = zoom + '%';
-      el.id = 'pg-' + i; // ID para saltos de página
+      el.id = 'pg-' + i;
       const cv = document.createElement('canvas'), ov = document.createElement('canvas');
       cv.width = ov.width = vp.width; cv.height = ov.height = vp.height;
       ov.className = 'ink'; ov.style.width = '100%'; ov.style.height = '100%';
@@ -748,10 +800,31 @@ $('#newS').onclick = async () => {
 };
 $('#rv').onchange = async e => {
   $('#rvo').innerHTML = '';
+  let count = 0, sumBloom = 0, maxBloom = 0;
+  
   for (const f of e.target.files) {
+    const text = await f.text();
+    // Extraer Bloom con Regex (busca "Nivel de Bloom máximo: Aplicar (promedio 3.5)")
+    const bloomMatch = text.match(/Nivel de Bloom máximo:.*?\(promedio\s+([\d.]+)\)/i);
+    if (bloomMatch) {
+      count++;
+      const val = parseFloat(bloomMatch[1]);
+      sumBloom += val;
+      if (val > maxBloom) maxBloom = val;
+    }
+
     const d = document.createElement('details');
-    d.innerHTML = '<summary>' + esc(f.name) + '</summary><div class="mut">' + md(await f.text()) + '</div>';
+    d.innerHTML = '<summary>' + esc(f.name) + '</summary><div class="mut">' + md(text) + '</div>';
     $('#rvo').appendChild(d);
+  }
+
+  if (count > 0) {
+    $('#group-stats').classList.remove('hide');
+    $('#st-count').textContent = count;
+    $('#st-avg').textContent = (sumBloom / count).toFixed(1);
+    $('#st-max').textContent = maxBloom.toFixed(1);
+  } else {
+    $('#group-stats').classList.add('hide');
   }
 };
 $('#pw').onkeydown = e => { if (e.key === 'Enter') $('#goA').click(); };
@@ -770,7 +843,21 @@ async function loadStaff() {
     const data = await idbGet('staff', 'list');
     if (data) ST = data;
     ST.students = ST.students || []; ST.log = ST.log || [];
-    dbg('loadStaff(): students=' + ST.students.length + ' log=' + ST.log.length);
+    
+    // NUEVO: Comprobar si hay cambios sin publicar
+    const currentHashes = await Promise.all(ST.students.map(s => pbk(s.m)));
+    const activeRoster = getRoster() || [];
+    // Comparamos tamaño. Para ser exactos, podríamos comparar elementos, pero el tamaño es suficiente para el aviso.
+    if (currentHashes.length > 0 && currentHashes.length !== activeRoster.length) {
+      $('#dirty-warn').classList.remove('hide');
+    } else if (activeRoster.length === 0) {
+      $('#dirty-warn').classList.add('hide');
+    } else {
+      // Si los tamaños coinciden, podríamos tener hashes distintos (raro en este flujo). Lo dejamos pasar.
+      $('#dirty-warn').classList.add('hide'); 
+    }
+
+    dbg('loadStaff(): students=' + ST.students.length);
   } catch (e) { dbg('loadStaff() error: ' + (e.message || e)); }
   drawST();
 }
@@ -789,6 +876,10 @@ async function saveST() {
     ST.log = ST.log.slice(-200);
     await idbPut('staff', { id: 'list', students: ST.students, log: ST.log });
     note('✓ Lista guardada localmente · ' + ST.students.length + ' alumnos · ' + new Date().toLocaleTimeString('es-MX'), true);
+    
+    // Mostrar aviso de cambios sin publicar (asumiendo que al guardar, la lista difiere del roster activo)
+    $('#dirty-warn').classList.remove('hide');
+
     dbg('saveST(): guardado local. students=' + ST.students.length);
   } catch (e) {
     dbg('saveST() error: ' + (e.message || e));
@@ -852,7 +943,7 @@ $('#tmb').onclick = async () => {
   note(exists ? '✓ La matrícula ' + m + ' está en la lista local.' : '✗ La matrícula ' + m + ' NO está en la lista local.', !!exists);
 };
 
-/* ======================= PUBLICAR LISTA ======================= */
+/* ======================= PUBLICAR Y QR ======================= */
 $('#publish').onclick = async () => {
   if (!ST.students.length) { note('✗ No hay alumnos en la lista. Carga o agrega alumnos primero.', false); return; }
   note('Generando archivo publicado…');
@@ -862,10 +953,15 @@ $('#publish').onclick = async () => {
     let html = resp ? await resp.text() : document.documentElement.outerHTML;
     if (!html || html.length < 100) html = document.documentElement.outerHTML;
     html = html.replace(/<script[^>]*>[\s\S]*?window\.__ROSTER__[\s\S]*?<\/script>/gi, '');
-    const inject = `<script>window.__ROSTER__ = ${JSON.stringify(hashes)};<\/script>`;
+    html = html.replace(/<script[^>]*>[\s\S]*?window\.__AI_RULES__[\s\S]*?<\/script>/gi, '');
+    
+    const aiRules = $('#aiRules').value.trim() || '';
+    const inject = `<script>window.__ROSTER__ = ${JSON.stringify(hashes)}; window.__AI_RULES__ = ${JSON.stringify(aiRules)};<\/script>`;
     html = html.replace('</head>', inject + '</head>');
+    
     descargar('tutor-publicado.html', new Blob([html], { type: 'text/html;charset=utf-8' }));
     note('✓ Archivo tutor-publicado.html descargado. Súbelo a GitHub Pages.', true);
+    $('#dirty-warn').classList.add('hide');
     dbg('publish(): hashes=' + hashes.length + ' html size=' + html.length);
   } catch (e) {
     dbg('publish() error: ' + (e.message || e));
@@ -873,7 +969,34 @@ $('#publish').onclick = async () => {
   }
 };
 
-/* ======================= MENSAJES / CONFIRMACIÓN ======================= */
+$('#qrBtn').onclick = () => {
+  const currentUrl = window.location.href;
+  const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(currentUrl)}`;
+  $('#qr-img').src = qrUrl;
+  $('#qr-container').style.display = 'block';
+};
+$('#dirty-warn').onclick = () => document.querySelector('[data-t=doc]').click();
+
+/* ======================= EDITOR DE INSTRUCCIONES IA ======================= */
+async function loadAIRules() {
+  try {
+    const data = await idbGet('settings', 'aiRules');
+    if (data && data.text) $('#aiRules').value = data.text;
+    else if (window.__AI_RULES__) $('#aiRules').value = window.__AI_RULES__;
+  } catch (e) {}
+}
+$('#saveAIRules').onclick = async () => {
+  const text = $('#aiRules').value.trim();
+  try {
+    await idbPut('settings', { id: 'aiRules', text });
+    note('✓ Instrucciones globales guardadas. Recuerda volver a publicar el HTML para que se apliquen.', true);
+    $('#dirty-warn').classList.remove('hide');
+  } catch (e) {
+    note('✗ No se pudieron guardar las instrucciones.', false);
+  }
+};
+
+/* ======================= MENSAJES ======================= */
 function note(t, ok) {
   const d = $('#dmsg');
   d.textContent = t;
@@ -918,7 +1041,7 @@ function confirmUI(msg, word) {
   });
 }
 
-/* ======================= MATERIAS Y PERIODO ======================= */
+/* ======================= MATERIAS ======================= */
 let MT = { periodo: '', items: [] };
 async function loadMaterias() {
   try {
@@ -944,6 +1067,7 @@ async function saveMT(msg) {
   try {
     await idbPut('materias', { id: 'current', periodo: MT.periodo || '', items: MT.items });
     note('✓ ' + msg + ' · ' + MT.items.length + ' materias · ' + new Date().toLocaleTimeString('es-MX'), true);
+    $('#dirty-warn').classList.remove('hide');
   } catch (e) { note('✗ No se pudo guardar (' + (e.message || e) + ')', false); }
   drawMT();
 }
@@ -1025,7 +1149,7 @@ function showPv(rows) {
 }
 
 /* ======================= ARRANQUE ======================= */
-dbg('Recurso iniciado. Sin dependencia de Claude.ai. IA: Puter.js.');
+dbg('Recurso iniciado. Bloque 1 + Bloque 2 activos.');
 if (typeof puter === 'undefined') {
   $('#offb').classList.remove('hide');
   dbg('ADVERTENCIA: Puter.js no se cargó. La IA no funcionará.');
