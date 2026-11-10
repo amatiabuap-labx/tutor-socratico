@@ -28,7 +28,7 @@ button.s{background:transparent;color:var(--azul2);border:1px solid var(--azul2)
 .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}.row>*{flex:1 1 140px}.row>button{flex:0 0 auto}
 nav{display:flex;gap:8px;margin-bottom:16px;overflow-x:auto;padding-bottom:4px;}nav button{background:var(--card);color:var(--tx);border:1px solid var(--bd);border-radius:20px;padding:8px 16px;font-weight:500;}nav button.on{background:var(--azul);color:#fff;border-color:var(--azul);}
 #chat{height:50vh;min-height:300px;overflow-y:auto;padding:10px;background:var(--bg);border-radius:8px;border:1px solid var(--bd);margin-bottom:12px;}
-.m{padding:12px 16px;border-radius:12px;margin:8px 0;max-width:90%;line-height:1.5;box-shadow:var(--shadow);font-size:14px;}
+.m{padding:12px 16px;border-radius:12px;margin:8px 0;max-width:90%;line-height:1.5;box-shadow:var(--shadow);font-size:14px;position:relative;}
 .ia{background:var(--ia);border-left:4px solid var(--azul2);border-bottom-left-radius:2px;}
 .us{background:var(--us);margin-left:auto;border-right:4px solid var(--oro);border-bottom-right-radius:2px;}
 .pill{display:inline-block;font-size:11px;font-weight:600;background:var(--ia);color:var(--azul2);border-radius:20px;padding:3px 10px;margin:2px;}
@@ -64,7 +64,11 @@ h2,h3,h4{font-family:var(--font-title);margin-top:0;}
 .quick-prompt { background: var(--bg); border: 1px solid var(--bd); color: var(--tx); padding: 8px 12px; border-radius: 20px; font-size: 12px; cursor: pointer; transition: all 0.2s; text-align: left;}
 .quick-prompt:hover { border-color: var(--azul2); background: var(--ia); }
 
-/* Panel Docente */
+/* Botón de copiar */
+.copy-btn { position:absolute; top:8px; right:8px; background:transparent; border:none; color:var(--mut); cursor:pointer; font-size:14px; opacity:0.5; transition:opacity 0.2s;}
+.m:hover .copy-btn { opacity:1; }
+
+/* Panel Docente Gráfica y Tablas */
 .warn-badge { background:#E65100; color:#fff; padding:2px 8px; border-radius:12px; font-size:11px; font-weight:bold; margin-left:8px; cursor:pointer; animation:pulse 2s infinite; }
 @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
 #qr-container { display:none; text-align:center; background:#fff; padding:16px; border-radius:8px; margin-top:10px; border:1px solid var(--bd); }
@@ -72,6 +76,13 @@ h2,h3,h4{font-family:var(--font-title);margin-top:0;}
 .stats-box { background:var(--bg); border:1px solid var(--bd); border-radius:8px; padding:12px; margin-top:12px; display:flex; gap:16px; flex-wrap:wrap; }
 .stat-item { font-size:13px; }
 .stat-val { font-size:20px; font-weight:bold; color:var(--azul2); display:block; }
+
+/* Gráfica de barras simple */
+.chart-container { display:flex; align-items:flex-end; gap:8px; height:100px; margin-top:16px; padding-bottom:24px; border-bottom:1px solid var(--bd); }
+.chart-bar-wrapper { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:flex-end; height:100%; }
+.chart-bar { width:100%; background:var(--azul2); border-radius:4px 4px 0 0; transition:height 0.5s; min-height:2px; position:relative;}
+.chart-bar span { position:absolute; top:-20px; left:50%; transform:translateX(-50%); font-size:11px; font-weight:bold; color:var(--tx);}
+.chart-label { font-size:10px; color:var(--mut); margin-top:4px; text-align:center; height:20px;}
 </style>
 </head>
 <body>
@@ -207,10 +218,18 @@ h2,h3,h4{font-family:var(--font-title);margin-top:0;}
   <p class="mut">Carga los archivos <code>.md</code> de tus alumnos para extraer estadísticas grupales.</p>
   <input type="file" id="rv" accept=".md,.txt" multiple style="margin-bottom:12px;">
   
-  <div id="group-stats" class="stats-box hide">
-    <div class="stat-item">Alumnos evaluados <span class="stat-val" id="st-count">0</span></div>
-    <div class="stat-item">Bloom Promedio <span class="stat-val" id="st-avg">0.0</span></div>
-    <div class="stat-item">Bloom Máximo <span class="stat-val" id="st-max">0</span></div>
+  <div id="group-stats" class="hide">
+    <div class="stats-box">
+      <div class="stat-item">Alumnos evaluados <span class="stat-val" id="st-count">0</span></div>
+      <div class="stat-item">Bloom Promedio <span class="stat-val" id="st-avg">0.0</span></div>
+      <div class="stat-item">Bloom Máximo <span class="stat-val" id="st-max">0</span></div>
+    </div>
+    <div class="chart-container" id="chart-bars">
+      <!-- Las barras se generan dinámicamente con JS -->
+    </div>
+    <div style="display:flex; justify-content:space-between; margin-top:4px; font-size:10px; color:var(--mut);">
+      <span>Recordar</span><span>Comprender</span><span>Aplicar</span><span>Analizar</span><span>Evaluar</span><span>Crear</span>
+    </div>
   </div>
 
   <div id="rvo" style="margin-top:12px;"></div>
@@ -371,9 +390,9 @@ function enterApp() {
   $('#tb2').classList.toggle('hide', !S.test);
   $('#hAcc').textContent = S.admin ? 'Cerrar acceso' : 'Acceso docente';
   
-  // Cargas iniciales seguras
   loadMaterias();
   restorePdfFromCache();
+  restoreSession(); // NUEVO: Restaurar sesión previa del alumno
   if (S.admin) {
     loadStaff();
     loadAIRules();
@@ -412,6 +431,49 @@ themeToggle.onclick = () => {
   localStorage.setItem('theme', newTheme);
   themeToggle.textContent = newTheme === 'dark' ? '☀️ Modo' : '🌙 Modo';
 };
+
+/* ======================= AUTOGUARDADO DE SESIÓN ======================= */
+function saveSession() {
+  if (S.admin || !S.mat) return;
+  const sessionData = {
+    p: S.p, msgs: S.msgs, meta: S.meta, ayuda: S.ayuda,
+    t0: S.t0, pdfName: S.pdfName, pdfPages: S.pdfPages
+  };
+  localStorage.setItem('amatia_session_' + S.mat, JSON.stringify(sessionData));
+}
+function restoreSession() {
+  if (S.admin || !S.mat) return;
+  try {
+    const data = localStorage.getItem('amatia_session_' + S.mat);
+    if (!data) return;
+    const s = JSON.parse(data);
+    if (!s.msgs || !s.msgs.length) return;
+
+    S.p = s.p; S.msgs = s.msgs; S.meta = s.meta || []; S.ayuda = s.ayuda || 0; S.t0 = s.t0;
+    S.pdfName = s.pdfName || ''; S.pdfPages = s.pdfPages || [];
+    
+    // Restaurar UI
+    $('#setup').classList.add('hide');
+    $('#sess').classList.remove('hide');
+    $('#quick-prompts').classList.add('hide');
+    
+    // Re-renderizar chat
+    $('#chat').innerHTML = '';
+    S.msgs.forEach(m => bub(m.role === 'user' ? 'us' : 'ia', m.content));
+    stat();
+    
+    if (S.pdfName) {
+      S.ctx = buildContext('');
+      $('#pdfName2').textContent = S.pdfName;
+      $('#pdfInfo2').classList.remove('hide');
+      $('#smsg').textContent = `PDF restaurado de caché: ${S.pdfName}`;
+    }
+    toast('Sesión anterior restaurada automáticamente.', false);
+  } catch (e) { dbg('restoreSession error: ' + e.message); }
+}
+function clearSession() {
+  if (S.mat) localStorage.removeItem('amatia_session_' + S.mat);
+}
 
 /* ======================= CARGA DE DATOS DOCENTE ======================= */
 let PEND = [];
@@ -510,7 +572,7 @@ $('#tmb').onclick = async () => {
   note(exists ? '✓ La matrícula ' + m + ' está en la lista local.' : '✗ La matrícula ' + m + ' NO está en la lista local.', !!exists);
 };
 
-/* ======================= CHAT ======================= */
+/* ======================= CHAT Y PREGUNTAS ======================= */
 function buildContext(query) {
   if (!S.pdfPages || !S.pdfPages.length) return '';
   const full = S.pdfPages.filter(p => p.text.length > 20).map(p => `[p.${p.page}] ${p.text}`).join('\n\n');
@@ -567,10 +629,20 @@ function bub(c, t) {
   const d = document.createElement('div');
   d.className = 'm ' + c; 
   d.innerHTML = (c === 'ia') ? formatMD(t) : esc(t);
-  $('#chat').appendChild(d); 
-  $('#chat').scrollTop = 1e9;
   
   if (c === 'ia') {
+    // Agregar botón de copiar
+    const cp = document.createElement('button');
+    cp.className = 'copy-btn';
+    cp.innerHTML = '📋';
+    cp.title = 'Copiar respuesta';
+    cp.onclick = () => {
+      navigator.clipboard.writeText(strip(t));
+      toast('Copiado al portapapeles', false);
+    };
+    d.appendChild(cp);
+
+    // Enlazar citas
     d.querySelectorAll('.cite-btn').forEach(btn => {
       btn.onclick = () => {
         const page = parseInt(btn.dataset.page);
@@ -582,6 +654,9 @@ function bub(c, t) {
       };
     });
   }
+  
+  $('#chat').appendChild(d); 
+  $('#chat').scrollTop = 1e9;
   return d;
 }
 
@@ -612,30 +687,36 @@ async function ask(txt) {
   b.innerHTML = '<div class="typing-indicator"><span></span><span></span><span></span></div>';
 
   try {
-    const response = await puter.ai.chat(messages, { model: 'gpt-5-nano', stream: false });
-    let text = '';
-    if (typeof response === 'string') text = response;
-    else if (response?.message?.content) {
-      text = Array.isArray(response.message.content) ? response.message.content.map(c => c.text || '').join('') : response.message.content;
-    } else if (response?.text) text = response.text;
-    else text = String(response);
+    // Usamos streaming aquí
+    const response = await puter.ai.chat(messages, { model: 'gpt-5-nano', stream: true });
+    let fullText = '';
+    
+    // Inicializar burbuja para ir escribiendo
+    b.innerHTML = '';
+    const textContainer = document.createElement('div');
+    b.appendChild(textContainer);
+    
+    for await (const part of response) {
+      if (part?.text) {
+        fullText += part.text;
+        // Removemos temporalmente el META para no mostrarlo en vivo
+        textContainer.innerHTML = formatMD(strip(fullText));
+        $('#chat').scrollTop = 1e9;
+      }
+    }
 
-    b.innerHTML = formatMD(strip(text));
-    b.querySelectorAll('.cite-btn').forEach(btn => {
-      btn.onclick = () => {
-        const page = parseInt(btn.dataset.page);
-        document.querySelector('[data-t=bit]').click();
-        setTimeout(() => {
-          const target = document.getElementById('pg-' + page);
-          if (target) target.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        }, 100);
-      };
-    });
+    // Al terminar, procesamos el texto completo final
+    b.innerHTML = formatMD(strip(fullText));
+    b = bub('ia', strip(fullText)); // Volvemos a inyectar para tener el botón de copiar y citas actualizadas
+    
+    // Eliminamos la burbuja temporal de texto
+    if (textContainer.parentNode) textContainer.parentNode.removeChild(textContainer);
 
-    S.msgs.push({ role: 'assistant', content: text });
-    const m = text.match(/##META\s+bloom=(\d)\s+estandar=([^\n]*?)\s+ayuda=(\d)/);
+    S.msgs.push({ role: 'assistant', content: fullText });
+    const m = fullText.match(/##META\s+bloom=(\d)\s+estandar=([^\n]*?)\s+ayuda=(\d)/);
     S.meta.push(m ? { bloom: +m[1], est: m[2].trim(), ay: +m[3] } : {});
     stat();
+    saveSession();
   } catch (e) {
     b.innerHTML = 'No pude responder (' + esc(e.message || e) + '). Intenta de nuevo.';
     S.msgs.pop();
@@ -681,10 +762,11 @@ $('#fin').onclick = async () => {
     S.fb = text;
   } catch (e) { S.fb = '(No se pudo generar la retroalimentación automática.)'; }
   $('#fin').disabled = false; $('#fin').textContent = 'Generar retroalimentación y reporte';
+  clearSession(); // Limpiamos la sesión guardada al cerrarla formalmente
   document.querySelector('[data-t=rep]').click();
 };
 
-/* ======================= REPORTES ======================= */
+/* ======================= REPORTES Y BITÁCORA ======================= */
 function ind() {
   const b = S.meta.map(m => m.bloom).filter(Boolean), e = {};
   S.meta.forEach(m => m.est && (e[m.est] = (e[m.est] || 0) + 1));
@@ -1008,6 +1090,7 @@ async function loadPdf(f) {
     $('#pdfName2').textContent = f.name + ' · ' + badge;
     $('#pdfInfo2').classList.remove('hide');
     stat();
+    saveSession(); // Autoguardar
 
     try { await idbPut('pdf', { id: 'material', name: f.name, pages: S.pdfPages, at: Date.now() }); } catch (e) {}
   } catch (e) { m('No pude abrir el PDF: ' + (e.message || e)); }
@@ -1022,12 +1105,13 @@ $('#rmPdf').onclick = async () => {
   $('#pdfInfo2').classList.add('hide');
   try { await idbDelete('pdf', 'material'); } catch (e) {}
   stat();
+  saveSession();
 };
 
 async function restorePdfFromCache() {
   try {
     const cached = await idbGet('pdf', 'material');
-    if (cached && cached.pages && cached.pages.length) {
+    if (cached && cached.pages && cached.pages.length && !S.pdfPages.length) {
       S.pdfName = cached.name; S.pdfPages = cached.pages; S.ctx = buildContext('');
       $('#smsg').textContent = `PDF restaurado de caché: ${cached.name} (${cached.pages.length} págs).`;
       $('#pdfName2').textContent = cached.name + ' · ' + cached.pages.length + ' págs';
@@ -1058,19 +1142,29 @@ $('#newS').onclick = async () => {
   $('#chat').innerHTML = ''; $('#r1').value = $('#r2').value = '';
   $('#refl').classList.add('hide'); $('#sess').classList.add('hide'); $('#setup').classList.remove('hide');
   $('#quick-prompts').classList.add('hide');
+  clearSession();
 };
+
+/* ======================= DASHBOARD REPORTES Y ANÁLISIS ======================= */
 $('#rv').onchange = async e => {
   $('#rvo').innerHTML = '';
   let count = 0, sumBloom = 0, maxBloom = 0;
+  const bloomCounts = {1:0, 2:0, 3:0, 4:0, 5:0, 6:0};
   
   for (const f of e.target.files) {
     const text = await f.text();
-    const bloomMatch = text.match(/Nivel de Bloom máximo:.*?\(promedio\s+([\d.]+)\)/i);
-    if (bloomMatch) {
+    // Extraer Bloom del reporte (promedio y máximo)
+    const maxMatch = text.match(/Nivel de Bloom máximo:\s*([A-Za-z]+)\s*\(promedio\s+([\d.]+)\)/i);
+    
+    if (maxMatch) {
       count++;
-      const val = parseFloat(bloomMatch[1]);
+      const val = parseFloat(maxMatch[2]);
       sumBloom += val;
       if (val > maxBloom) maxBloom = val;
+      
+      // Llenar gráfica (redondeando el promedio al entero más cercano)
+      const bIndex = Math.round(val);
+      if (bIndex >= 1 && bIndex <= 6) bloomCounts[bIndex]++;
     }
 
     const d = document.createElement('details');
@@ -1083,12 +1177,31 @@ $('#rv').onchange = async e => {
     $('#st-count').textContent = count;
     $('#st-avg').textContent = (sumBloom / count).toFixed(1);
     $('#st-max').textContent = maxBloom.toFixed(1);
+
+    // Renderizar gráfica
+    const container = $('#chart-bars');
+    container.innerHTML = '';
+    const maxVal = Math.max(...Object.values(bloomCounts), 1);
+    
+    for (let i = 1; i <= 6; i++) {
+      const c = bloomCounts[i];
+      const h = (c / maxVal) * 100;
+      const wrapper = document.createElement('div');
+      wrapper.className = 'chart-bar-wrapper';
+      wrapper.innerHTML = `
+        <div class="chart-bar" style="height:${h}%">
+          ${c > 0 ? '<span>' + c + '</span>' : ''}
+        </div>
+        <div class="chart-label">${BL[i].substring(0,4)}</div>
+      `;
+      container.appendChild(wrapper);
+    }
   } else {
     $('#group-stats').classList.add('hide');
   }
 };
 
-/* ======================= MENSAJES Y NOTIFICACIONES ======================= */
+/* ======================= MENSAJES ======================= */
 function note(t, ok) {
   const d = $('#dmsg');
   d.textContent = t;
@@ -1134,7 +1247,7 @@ function confirmUI(msg, word) {
 }
 
 /* ======================= ARRANQUE ======================= */
-dbg('Recurso iniciado. Interfaz lista.');
+dbg('Recurso iniciado. Bloque 1 + 2 + 3 listos.');
 </script>
 </body>
 </html>
