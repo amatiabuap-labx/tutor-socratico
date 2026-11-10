@@ -168,7 +168,6 @@ h2,h3,h4{font-family:var(--font-title);margin-top:0;}
     </ol>
   </details>
 
-  <!-- NUEVO: Generador QR -->
   <h4>Acceso rápido para alumnos</h4>
   <div class="row">
     <button id="qrBtn">📱 Generar Código QR del enlace actual</button>
@@ -199,9 +198,8 @@ h2,h3,h4{font-family:var(--font-title);margin-top:0;}
   <div class="row" style="margin-top:6px"><input id="mnom" placeholder="Nombre de la materia"><button id="mad">Agregar materia</button></div>
   <div id="mlist" style="margin-top:6px"></div>
 
-  <!-- NUEVO: Editor de Instrucciones de IA -->
   <h4 style="margin-top:24px;">Instrucciones globales para la IA</h4>
-  <p class="mut" style="margin-bottom:8px;">Escribe aquí instrucciones de comportamiento que se inyectarán a todos los tutores (ej. "Sé muy estricto con las fórmulas", "Pide siempre la fuente bibliográfica").</p>
+  <p class="mut" style="margin-bottom:8px;">Escribe aquí instrucciones de comportamiento que se inyectarán a todos los tutores (ej. "Sé muy estricto con las fórmulas").</p>
   <textarea id="aiRules" rows="3" placeholder="Ej. Enfócate en el análisis numérico y solicita siempre el cálculo exacto."></textarea>
   <div class="row" style="margin-top:8px"><button class="s" id="saveAIRules">Guardar instrucciones</button></div>
 
@@ -232,7 +230,7 @@ h2,h3,h4{font-family:var(--font-title);margin-top:0;}
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js"></script>
 <script src="https://js.puter.com/v2/"></script>
 <script>
-/* ======================= CONFIGURACIÓN ======================= */
+/* ======================= CONFIGURACIÓN Y ESTADO GLOBAL ======================= */
 const $ = s => document.querySelector(s);
 const SALT = 'amatia-buap:';
 const MH = '41caefe37f16993dfc6ccae131c089215a8a1c2730847a039482ba921cc126df';
@@ -250,24 +248,8 @@ const S = {
 };
 const PS = 'amatia-labx-v2';
 const DB_NAME = 'amatia-tutor';
-const DB_VER = 3; // Subimos versión para la nueva tabla 'settings'
+const DB_VER = 3; // Subimos versión para la tabla 'settings'
 const MAX_CTX_CHARS = 28000;
-
-/* ======================= TEMA ======================= */
-const themeToggle = $('#themeToggle');
-const currentTheme = localStorage.getItem('theme');
-if (currentTheme) {
-  document.documentElement.setAttribute('data-theme', currentTheme);
-  themeToggle.textContent = currentTheme === 'dark' ? '☀️ Modo' : '🌙 Modo';
-}
-themeToggle.onclick = () => {
-  const isDark = document.documentElement.getAttribute('data-theme') === 'dark' || 
-                 (!document.documentElement.getAttribute('data-theme') && window.matchMedia('(prefers-color-scheme: dark)').matches);
-  const newTheme = isDark ? 'light' : 'dark';
-  document.documentElement.setAttribute('data-theme', newTheme);
-  localStorage.setItem('theme', newTheme);
-  themeToggle.textContent = newTheme === 'dark' ? '☀️ Modo' : '🌙 Modo';
-};
 
 /* ======================= DIAGNÓSTICO ======================= */
 function dbg(msg) {
@@ -285,6 +267,13 @@ async function sha(t) {
 }
 const esc = t => String(t).replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
 const stamp = () => new Date().toISOString().slice(0, 10);
+
+/* ======================= CRIPTOGRAFÍA (PRIORIDAD ALTA) ======================= */
+async function pbk(m) {
+  const k = await crypto.subtle.importKey('raw', new TextEncoder().encode(m), 'PBKDF2', false, ['deriveBits']);
+  const b = await crypto.subtle.deriveBits({ name: 'PBKDF2', hash: 'SHA-256', salt: new TextEncoder().encode(PS), iterations: 150000 }, k, 256);
+  return [...new Uint8Array(b)].map(x => x.toString(16).padStart(2, '0')).join('');
+}
 
 /* ======================= DESCARGA NATIVA ======================= */
 function descargar(nombre, data) {
@@ -349,7 +338,64 @@ function getRoster() {
   return Array.isArray(window.__ROSTER__) ? window.__ROSTER__ : null;
 }
 
-/* ======================= ENTRADA ======================= */
+/* ======================= CARGA DE DATOS DOCENTE ======================= */
+let PEND = [];
+let ST = { students: [], log: [] };
+async function loadStaff() {
+  try {
+    const data = await idbGet('staff', 'list');
+    if (data) ST = data;
+    ST.students = ST.students || []; ST.log = ST.log || [];
+    
+    const currentHashes = await Promise.all(ST.students.map(s => pbk(s.m)));
+    const activeRoster = getRoster() || [];
+    if (currentHashes.length > 0 && currentHashes.length !== activeRoster.length) {
+      $('#dirty-warn').classList.remove('hide');
+    } else if (activeRoster.length === 0) {
+      $('#dirty-warn').classList.add('hide');
+    } else {
+      $('#dirty-warn').classList.add('hide'); 
+    }
+
+    dbg('loadStaff(): students=' + ST.students.length);
+  } catch (e) { dbg('loadStaff() error: ' + (e.message || e)); }
+  drawST();
+}
+
+/* ======================= INTERFAZ DOCENTE ======================= */
+function drawST() {
+  const q = ($('#fq').value || '').toLowerCase();
+  const rows = ST.students.filter(s => (s.m + ' ' + (s.n || '')).toLowerCase().includes(q));
+  $('#cnt').textContent = ST.students.length;
+  $('#hchip').textContent = 'Lista: ' + ST.students.length + ' alumnos';
+  $('#tb').innerHTML = '<tr><th>Matrícula</th><th>Nombre</th><th>Alta</th><th>Motivo</th><th></th></tr>' +
+    rows.map(s => `<tr><td>${esc(s.m)}</td><td>${esc(s.n || '—')}</td><td>${esc((s.at || '').slice(0, 10))}</td><td>${esc(s.why || '')}</td><td><button class="s" data-del="${esc(s.m)}">Eliminar</button></td></tr>`).join('');
+  $('#lg').innerHTML = (ST.log || []).slice(-12).reverse().map(l => esc(l.t.slice(0, 16).replace('T', ' ')) + ' · ' + esc(l.a) + ' ' + esc(l.m) + (l.w ? ' (' + esc(l.w) + ')' : '')).join('<br>') || 'Sin cambios registrados.';
+  $('#tb').querySelectorAll('[data-del]').forEach(b => b.onclick = () => delSt(b.dataset.del));
+}
+
+async function saveST() {
+  try {
+    ST.log = ST.log.slice(-200);
+    await idbPut('staff', { id: 'list', students: ST.students, log: ST.log });
+    note('✓ Lista guardada localmente · ' + ST.students.length + ' alumnos · ' + new Date().toLocaleTimeString('es-MX'), true);
+    $('#dirty-warn').classList.remove('hide');
+    dbg('saveST(): guardado local. students=' + ST.students.length);
+  } catch (e) {
+    dbg('saveST() error: ' + (e.message || e));
+    note('✗ No se pudo guardar en IndexedDB (' + (e.message || e) + ')', false);
+  }
+  drawST();
+}
+
+async function delSt(m) {
+  if (!await confirmUI('¿Eliminar al alumno ' + m + ' de la lista? Perderá el acceso.')) return;
+  ST.students = ST.students.filter(s => s.m !== m);
+  ST.log.push({ t: new Date().toISOString(), a: 'baja', m });
+  await saveST();
+}
+
+/* ======================= ENTRADA / LOGIN ======================= */
 function enter() {
   $('#gate').classList.add('hide');
   $('#tpanel').classList.add('hide');
@@ -382,11 +428,21 @@ $('#go').onclick = async () => {
   }
   S.mat = m; enter();
 };
+
 $('#goA').onclick = async () => {
   if (await sha(SALT + $('#pw').value) === MH) {
     S.admin = true; S.test = true; S.mat = 'DOCENTE'; $('#pw').value = ''; enter(); audit();
   } else $('#tmsg').textContent = 'Contraseña incorrecta.';
 };
+
+$('#pw').onkeydown = e => { if (e.key === 'Enter') $('#goA').click(); };
+$('#mat').onkeydown = e => { if (e.key === 'Enter') $('#go').click(); };
+$('#hAcc').onclick = async () => {
+  if (S.admin) { if (await confirmUI('¿Cerrar el acceso docente? Se reiniciará la página.')) location.reload(); }
+  else $('#tpanel').classList.toggle('hide');
+};
+$('#hchip').onclick = () => document.querySelector('[data-t=doc]').click();
+$('#dirty-warn').onclick = () => document.querySelector('[data-t=doc]').click();
 
 document.querySelectorAll('nav button').forEach(b => b.onclick = () => {
   document.querySelectorAll('nav button').forEach(x => x.classList.toggle('on', x === b));
@@ -395,7 +451,23 @@ document.querySelectorAll('nav button').forEach(b => b.onclick = () => {
   if (b.dataset.t === 'doc') audit();
 });
 
-/* ======================= CONSTRUCCIÓN DE CONTEXTO ======================= */
+/* ======================= TEMA (MODO OSCURO/CLARO) ======================= */
+const themeToggle = $('#themeToggle');
+const currentTheme = localStorage.getItem('theme');
+if (currentTheme) {
+  document.documentElement.setAttribute('data-theme', currentTheme);
+  themeToggle.textContent = currentTheme === 'dark' ? '☀️ Modo' : '🌙 Modo';
+}
+themeToggle.onclick = () => {
+  const isDark = document.documentElement.getAttribute('data-theme') === 'dark' || 
+                 (!document.documentElement.getAttribute('data-theme') && window.matchMedia('(prefers-color-scheme: dark)').matches);
+  const newTheme = isDark ? 'light' : 'dark';
+  document.documentElement.setAttribute('data-theme', newTheme);
+  localStorage.setItem('theme', newTheme);
+  themeToggle.textContent = newTheme === 'dark' ? '☀️ Modo' : '🌙 Modo';
+};
+
+/* ======================= MÓDULO DE PREGUNTAS Y CHAT ======================= */
 function buildContext(query) {
   if (!S.pdfPages || !S.pdfPages.length) return '';
   const full = S.pdfPages.filter(p => p.text.length > 20).map(p => `[p.${p.page}] ${p.text}`).join('\n\n');
@@ -416,7 +488,6 @@ function buildContext(query) {
   return [...pages].sort((a, b) => a - b).map(n => `[p.${n}] ${S.pdfPages[n - 1].text}`).join('\n\n').slice(0, MAX_CTX_CHARS);
 }
 
-/* ======================= TUTOR CON PUTER.JS ======================= */
 function sys(ctx) {
   const p = S.p;
   const aiRules = window.__AI_RULES__ || 'Ninguna instrucción adicional.';
@@ -438,7 +509,6 @@ Reglas generales: responde en español, máx. 110 palabras, UNA sola pregunta po
 Termina SIEMPRE con una última línea exacta: ##META bloom=<1-6> estandar=<estándar evaluado> ayuda=<0-4>`;
 }
 
-/* Formateador Markdown básico */
 function formatMD(text) {
   let html = esc(text);
   html = html.replace(/\[p\.(\d+)\]/g, '<a class="cite-btn" data-page="$1" href="javascript:void(0)">[p.$1]</a>');
@@ -531,13 +601,13 @@ async function ask(txt) {
   $('#send').disabled = $('#hint').disabled = false;
 }
 
+/* ======================= BOTONES DEL CHAT ======================= */
 document.querySelectorAll('.quick-prompt').forEach(btn => {
   btn.onclick = () => {
     $('#inp').value = btn.dataset.prompt;
     $('#send').click();
   };
 });
-
 $('#start').onclick = () => {
   const g = i => $('#' + i).value.trim();
   if (!g('materia') || !g('tema')) {
@@ -572,7 +642,7 @@ $('#fin').onclick = async () => {
   document.querySelector('[data-t=rep]').click();
 };
 
-/* ======================= REPORTES ======================= */
+/* ======================= REPORTES Y BITÁCORA ======================= */
 function ind() {
   const b = S.meta.map(m => m.bloom).filter(Boolean), e = {};
   S.meta.forEach(m => m.est && (e[m.est] = (e[m.est] || 0) + 1));
@@ -609,7 +679,6 @@ function pdf(title, text) {
 $('#rPdf').onclick = () => S.msgs.length ? descargar(`reporte-${S.mat}-${stamp()}.pdf`, pdf('Reporte de sesión del Tutor Socrático', repMd())) : alert('Primero realiza una sesión.');
 $('#rMd').onclick = () => S.msgs.length ? descargar(`reporte-${S.mat}-${stamp()}.md`, repMd()) : alert('Primero realiza una sesión.');
 
-/* ======================= BITÁCORA ======================= */
 function md(t) {
   return esc(t).replace(/^# (.*)$/gm, '<h3>$1</h3>').replace(/\*\*(.+?)\*\*/g, '<b>$1</b>').replace(/\*(.+?)\*/g, '<i>$1</i>').replace(/^- (.*)$/gm, '• $1').replace(/\n/g, '<br>');
 }
@@ -635,7 +704,7 @@ function audit() {
     note(r ? 'Lista de acceso activa: ' + r.length + ' matrículas habilitadas.' : 'No hay lista de acceso embebida en esta copia.', !!r);
 }
 
-/* ======================= CARGA MASIVA CSV ======================= */
+/* ======================= PARSER CSV ======================= */
 function csvRows(t) {
   const R = []; let r = [], c = '', q = false;
   for (let i = 0; i < t.length; i++) {
@@ -680,6 +749,254 @@ function parseStudents(text) {
     out.push({ m: mat, n: nombre.replace(/\s+/g, ' ').trim() });
   });
   return out;
+}
+$('#add').onclick = async () => {
+  const m = $('#am').value.trim(), w = $('#aw').value.trim();
+  if (!/^\d{6,12}$/.test(m)) { $('#dmsg').textContent = 'Matrícula no válida (6 a 12 dígitos).'; return; }
+  if (ST.students.some(s => s.m === m)) { $('#dmsg').textContent = 'Esa matrícula ya está en la lista.'; return; }
+  const t = new Date().toISOString();
+  ST.students.push({ m, n: $('#an').value.trim(), at: t, why: w });
+  ST.log.push({ t, a: 'alta', m, w });
+  $('#am').value = $('#an').value = $('#aw').value = '';
+  await saveST();
+};
+$('#fq').oninput = drawST;
+$('#exp').onclick = () => descargar('lista-clase-' + stamp() + '.csv', 'matricula,nombre,alta,motivo\n' + ST.students.map(s => [s.m, s.n || '', (s.at || '').slice(0, 10), s.why || ''].map(x => '"' + String(x).replace(/"/g, '""') + '"').join(',')).join('\n'));
+$('#pvno').onclick = () => { PEND = []; $('#pv').classList.add('hide'); note('Carga cancelada. No se guardó nada.'); };
+$('#pvok').onclick = async () => {
+  if (!PEND.length) return;
+  note('Guardando…');
+  await loadStaff();
+  PEND.forEach(r => {
+    if (!ST.students.some(s => s.m === r.m)) {
+      const t = new Date().toISOString();
+      ST.students.push({ m: r.m, n: r.n, at: t, why: 'carga masiva' });
+      ST.log.push({ t, a: 'alta', m: r.m, w: 'carga masiva' });
+    }
+  });
+  PEND = [];
+  $('#pv').classList.add('hide');
+  await saveST();
+};
+$('#vfy').onclick = async () => {
+  note('Verificando…');
+  try {
+    const data = await idbGet('staff', 'list');
+    const n = data?.students?.length || 0;
+    await loadStaff();
+    note('Lista local: ' + n + ' alumnos guardados.', n > 0);
+  } catch (e) { note('✗ No se pudo verificar (' + (e.message || e) + ')', false); }
+};
+$('#tmb').onclick = async () => {
+  const m = $('#tm').value.trim();
+  if (!/^\d{6,12}$/.test(m)) return note('Matrícula no válida.', false);
+  const data = await idbGet('staff', 'list');
+  const exists = data?.students?.some(s => s.m === m);
+  note(exists ? '✓ La matrícula ' + m + ' está en la lista local.' : '✗ La matrícula ' + m + ' NO está en la lista local.', !!exists);
+};
+
+/* ======================= PUBLICAR Y QR ======================= */
+$('#publish').onclick = async () => {
+  if (!ST.students.length) { note('✗ No hay alumnos en la lista. Carga o agrega alumnos primero.', false); return; }
+  note('Generando archivo publicado…');
+  try {
+    const hashes = await Promise.all(ST.students.map(s => pbk(s.m)));
+    const resp = await fetch(window.location.href).catch(() => null);
+    let html = resp ? await resp.text() : document.documentElement.outerHTML;
+    if (!html || html.length < 100) html = document.documentElement.outerHTML;
+    html = html.replace(/<script[^>]*>[\s\S]*?window\.__ROSTER__[\s\S]*?<\/script>/gi, '');
+    html = html.replace(/<script[^>]*>[\s\S]*?window\.__AI_RULES__[\s\S]*?<\/script>/gi, '');
+    
+    const aiRules = $('#aiRules').value.trim() || '';
+    const inject = `<script>window.__ROSTER__ = ${JSON.stringify(hashes)}; window.__AI_RULES__ = ${JSON.stringify(aiRules)};<\/script>`;
+    html = html.replace('</head>', inject + '</head>');
+    
+    descargar('tutor-publicado.html', new Blob([html], { type: 'text/html;charset=utf-8' }));
+    note('✓ Archivo tutor-publicado.html descargado. Súbelo a GitHub Pages.', true);
+    $('#dirty-warn').classList.add('hide');
+    dbg('publish(): hashes=' + hashes.length + ' html size=' + html.length);
+  } catch (e) {
+    dbg('publish() error: ' + (e.message || e));
+    note('✗ No se pudo generar el archivo publicado: ' + (e.message || e), false);
+  }
+};
+
+$('#qrBtn').onclick = () => {
+  const currentUrl = window.location.href;
+  const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(currentUrl)}`;
+  $('#qr-img').src = qrUrl;
+  $('#qr-container').style.display = 'block';
+};
+
+/* ======================= INSTRUCCIONES IA ======================= */
+async function loadAIRules() {
+  try {
+    const data = await idbGet('settings', 'aiRules');
+    if (data && data.text) $('#aiRules').value = data.text;
+    else if (window.__AI_RULES__) $('#aiRules').value = window.__AI_RULES__;
+  } catch (e) {}
+}
+$('#saveAIRules').onclick = async () => {
+  const text = $('#aiRules').value.trim();
+  try {
+    await idbPut('settings', { id: 'aiRules', text });
+    note('✓ Instrucciones globales guardadas. Recuerda volver a publicar el HTML para que se apliquen.', true);
+    $('#dirty-warn').classList.remove('hide');
+  } catch (e) {
+    note('✗ No se pudieron guardar las instrucciones.', false);
+  }
+};
+
+/* ======================= NOTIFICACIONES Y CONFIRMACIÓN ======================= */
+function note(t, ok) {
+  const d = $('#dmsg');
+  d.textContent = t;
+  d.style.borderColor = ok === false ? '#B3261E' : ok ? '#2F6B5C' : '';
+  toast(t, ok === false);
+  dbg(t);
+}
+function toast(m, persist) {
+  let t = $('#toast');
+  if (!t) {
+    t = document.createElement('div');
+    t.id = 'toast'; t.setAttribute('role', 'alert');
+    t.style.cssText = 'position:fixed;left:16px;right:16px;bottom:calc(16px + env(safe-area-inset-bottom,0px));max-width:560px;margin:auto;background:#3A2A1E;color:#F3EBDD;border:1px solid var(--oro);border-radius:10px;padding:12px 16px;z-index:60;display:none;box-shadow:0 10px 25px rgba(0,0,0,0.5);font-weight:500;font-size:14px;';
+    document.body.appendChild(t);
+  }
+  t.textContent = m; t.style.display = 'block';
+  clearTimeout(t._h);
+  const ms = persist === true ? 0 : 8000;
+  if (ms > 0) t._h = setTimeout(() => t.style.display = 'none', ms);
+  else { t.onclick = () => (t.style.display = 'none'); }
+}
+window.alert = toast;
+function confirmUI(msg, word) {
+  return new Promise(res => {
+    const o = document.createElement('div');
+    o.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.6);backdrop-filter:blur(4px);z-index:70;display:flex;align-items:center;justify-content:center;padding:16px';
+    const b = document.createElement('div');
+    b.className = 'card'; b.style.cssText = 'max-width:440px;width:100%;margin:0;box-shadow:0 20px 40px rgba(0,0,0,0.4);';
+    const p = document.createElement('p'); p.style.whiteSpace = 'pre-wrap'; p.textContent = msg; b.appendChild(p);
+    let inp = null;
+    if (word) { inp = document.createElement('input'); inp.placeholder = 'Escribe ' + word; b.appendChild(inp); }
+    const r = document.createElement('div'); r.className = 'row'; r.style.marginTop = '16px';
+    const ok = document.createElement('button'), no = document.createElement('button');
+    ok.textContent = 'Confirmar'; no.textContent = 'Cancelar'; no.className = 's';
+    ok.id = 'cuiOk'; no.id = 'cuiNo';
+    if (word) ok.disabled = true;
+    if (inp) { inp.id = 'cuiIn'; inp.oninput = () => { ok.disabled = inp.value !== word; }; }
+    const done = v => { o.remove(); res(v); };
+    ok.onclick = () => done(true); no.onclick = () => done(false);
+    r.append(ok, no); b.appendChild(r); o.appendChild(b); document.body.appendChild(o);
+    (inp || no).focus();
+  });
+}
+
+/* ======================= MATERIAS ======================= */
+let MT = { periodo: '', items: [] };
+async function loadMaterias() {
+  try {
+    const data = await idbGet('materias', 'current');
+    if (data) MT = data;
+    MT.items = MT.items || [];
+    dbg('loadMaterias(): items=' + MT.items.length + ' periodo=' + (MT.periodo || ''));
+  } catch (e) { dbg('loadMaterias() error: ' + (e.message || e)); }
+  drawMT();
+}
+function drawMT() {
+  const sel = $('#materia'), cur = sel.value;
+  sel.innerHTML = MT.items.length
+    ? MT.items.map(m => '<option>' + esc(m) + '</option>').join('')
+    : '<option value="">(El docente aún no registra materias)</option>';
+  if (MT.items.includes(cur)) sel.value = cur;
+  $('label[for=materia]').textContent = 'Materia' + (MT.periodo ? ' · ' + MT.periodo : '');
+  $('#mper').value = MT.periodo || '';
+  $('#mlist').innerHTML = MT.items.map((m, i) => '<div class="row" style="margin:3px 0"><span>' + esc(m) + '</span><button class="s" data-md="' + i + '">Eliminar</button></div>').join('') || '<span class="mut">Sin materias registradas.</span>';
+  $('#mlist').querySelectorAll('[data-md]').forEach(b => b.onclick = () => delMat(+b.dataset.md));
+}
+async function saveMT(msg) {
+  try {
+    await idbPut('materias', { id: 'current', periodo: MT.periodo || '', items: MT.items });
+    note('✓ ' + msg + ' · ' + MT.items.length + ' materias · ' + new Date().toLocaleTimeString('es-MX'), true);
+    $('#dirty-warn').classList.remove('hide');
+  } catch (e) { note('✗ No se pudo guardar (' + (e.message || e) + ')', false); }
+  drawMT();
+}
+$('#mad').onclick = async () => {
+  const t = $('#mnom').value.trim().replace(/\s+/g, ' ');
+  if (!t) return;
+  await loadMaterias();
+  if (MT.items.some(x => x.toLowerCase() === t.toLowerCase())) return note('Esa materia ya está registrada.', false);
+  MT.items.push(t); $('#mnom').value = '';
+  await saveMT('Materia agregada');
+};
+$('#mpb').onclick = async () => {
+  const p = $('#mper').value.trim();
+  await loadMaterias();
+  MT.periodo = p;
+  await saveMT('Periodo guardado');
+};
+async function delMat(i) {
+  const t = MT.items[i];
+  if (t === undefined || !await confirmUI('¿Eliminar la materia «' + t + '»?')) return;
+  MT.items.splice(i, 1);
+  await saveMT('Materia eliminada');
+}
+$('#clsM').onclick = async () => {
+  if (!MT.items.length && !MT.periodo) return note('No hay materias ni periodo que borrar.');
+  if (!await confirmUI('Se borrarán ' + MT.items.length + ' materias y el periodo.')) return note('Borrado cancelado.');
+  try {
+    await idbDelete('materias', 'current');
+    MT = { periodo: '', items: [] };
+    note('✓ Materias y periodo borrados · ' + new Date().toLocaleTimeString('es-MX'), true);
+  } catch (e) { note('✗ No se pudo borrar (' + (e.message || e) + ')', false); }
+  drawMT();
+};
+$('#clsL').onclick = async () => {
+  await loadStaff();
+  const n = ST.students.length;
+  if (!n) return note('No hay lista que borrar.');
+  if (!await confirmUI('Se borrarán ' + n + ' alumnos de tu navegador. No se puede deshacer. Si necesitas respaldo, exporta antes el CSV.', 'BORRAR')) return note('Borrado cancelado. No se eliminó nada.');
+  try {
+    await idbDelete('staff', 'list');
+    ST = { students: [], log: [{ t: new Date().toISOString(), a: 'cierre de semestre: lista borrada (' + n + ' alumnos)', m: '' }] };
+    await idbPut('staff', { id: 'list', students: ST.students, log: ST.log });
+    note('✓ Lista borrada localmente · ' + new Date().toLocaleTimeString('es-MX'), true);
+  } catch (e) { note('✗ No se pudo borrar (' + (e.message || e) + ')', false); }
+  drawST();
+};
+
+/* ======================= CSV ESTRUCTURA ======================= */
+$('#csv').onchange = async e => {
+  const f = e.target.files[0];
+  if (!f) return;
+  note('Leyendo «' + f.name + '»…');
+  try {
+    const txt = await f.text();
+    const rows = parseStudents(txt);
+    if (!rows.length) {
+      note('✗ No encontré matrículas (6 a 12 dígitos) en el archivo. Revisa el formato.', false);
+      e.target.value = '';
+      return;
+    }
+    await loadStaff();
+    const nw = rows.filter(r => !ST.students.some(s => s.m === r.m)).length;
+    PEND = rows;
+    showPv(rows);
+    const ok = await confirmUI('Se detectaron ' + rows.length + ' alumnos en «' + f.name + '»: ' + nw + ' nuevos y ' + (rows.length - nw) + ' que ya estaban en la lista.\n\n¿Guardar la lista?');
+    e.target.value = '';
+    if (ok) { await $('#pvok').onclick(); }
+    else { PEND = []; $('#pv').classList.add('hide'); note('Carga cancelada. No se guardó nada.'); }
+  } catch (er) {
+    note('✗ Error al procesar el archivo: ' + (er.message || er), false);
+    e.target.value = '';
+  }
+};
+function showPv(rows) {
+  const nw = rows.filter(r => !ST.students.some(s => s.m === r.m));
+  $('#pvt').textContent = 'Se detectaron ' + rows.length + ' alumnos (' + nw.length + ' nuevos, ' + (rows.length - nw.length) + ' ya estaban en la lista). Revisa y confirma:';
+  $('#pvtb').innerHTML = rows.map(r => '<tr><td>' + esc(r.m) + '</td><td>' + esc(r.n) + '</td></tr>').join('');
+  $('#pv').classList.remove('hide');
 }
 
 /* ======================= VISOR PDF ======================= */
@@ -804,7 +1121,6 @@ $('#rv').onchange = async e => {
   
   for (const f of e.target.files) {
     const text = await f.text();
-    // Extraer Bloom con Regex (busca "Nivel de Bloom máximo: Aplicar (promedio 3.5)")
     const bloomMatch = text.match(/Nivel de Bloom máximo:.*?\(promedio\s+([\d.]+)\)/i);
     if (bloomMatch) {
       count++;
@@ -827,329 +1143,9 @@ $('#rv').onchange = async e => {
     $('#group-stats').classList.add('hide');
   }
 };
-$('#pw').onkeydown = e => { if (e.key === 'Enter') $('#goA').click(); };
-$('#mat').onkeydown = e => { if (e.key === 'Enter') $('#go').click(); };
-
-/* ======================= PERSISTENCIA LOCAL ======================= */
-let PEND = [];
-let ST = { students: [], log: [] };
-async function pbk(m) {
-  const k = await crypto.subtle.importKey('raw', new TextEncoder().encode(m), 'PBKDF2', false, ['deriveBits']);
-  const b = await crypto.subtle.deriveBits({ name: 'PBKDF2', hash: 'SHA-256', salt: new TextEncoder().encode(PS), iterations: 150000 }, k, 256);
-  return [...new Uint8Array(b)].map(x => x.toString(16).padStart(2, '0')).join('');
-}
-async function loadStaff() {
-  try {
-    const data = await idbGet('staff', 'list');
-    if (data) ST = data;
-    ST.students = ST.students || []; ST.log = ST.log || [];
-    
-    // NUEVO: Comprobar si hay cambios sin publicar
-    const currentHashes = await Promise.all(ST.students.map(s => pbk(s.m)));
-    const activeRoster = getRoster() || [];
-    // Comparamos tamaño. Para ser exactos, podríamos comparar elementos, pero el tamaño es suficiente para el aviso.
-    if (currentHashes.length > 0 && currentHashes.length !== activeRoster.length) {
-      $('#dirty-warn').classList.remove('hide');
-    } else if (activeRoster.length === 0) {
-      $('#dirty-warn').classList.add('hide');
-    } else {
-      // Si los tamaños coinciden, podríamos tener hashes distintos (raro en este flujo). Lo dejamos pasar.
-      $('#dirty-warn').classList.add('hide'); 
-    }
-
-    dbg('loadStaff(): students=' + ST.students.length);
-  } catch (e) { dbg('loadStaff() error: ' + (e.message || e)); }
-  drawST();
-}
-function drawST() {
-  const q = ($('#fq').value || '').toLowerCase();
-  const rows = ST.students.filter(s => (s.m + ' ' + (s.n || '')).toLowerCase().includes(q));
-  $('#cnt').textContent = ST.students.length;
-  $('#hchip').textContent = 'Lista: ' + ST.students.length + ' alumnos';
-  $('#tb').innerHTML = '<tr><th>Matrícula</th><th>Nombre</th><th>Alta</th><th>Motivo</th><th></th></tr>' +
-    rows.map(s => `<tr><td>${esc(s.m)}</td><td>${esc(s.n || '—')}</td><td>${esc((s.at || '').slice(0, 10))}</td><td>${esc(s.why || '')}</td><td><button class="s" data-del="${esc(s.m)}">Eliminar</button></td></tr>`).join('');
-  $('#lg').innerHTML = (ST.log || []).slice(-12).reverse().map(l => esc(l.t.slice(0, 16).replace('T', ' ')) + ' · ' + esc(l.a) + ' ' + esc(l.m) + (l.w ? ' (' + esc(l.w) + ')' : '')).join('<br>') || 'Sin cambios registrados.';
-  $('#tb').querySelectorAll('[data-del]').forEach(b => b.onclick = () => delSt(b.dataset.del));
-}
-async function saveST() {
-  try {
-    ST.log = ST.log.slice(-200);
-    await idbPut('staff', { id: 'list', students: ST.students, log: ST.log });
-    note('✓ Lista guardada localmente · ' + ST.students.length + ' alumnos · ' + new Date().toLocaleTimeString('es-MX'), true);
-    
-    // Mostrar aviso de cambios sin publicar (asumiendo que al guardar, la lista difiere del roster activo)
-    $('#dirty-warn').classList.remove('hide');
-
-    dbg('saveST(): guardado local. students=' + ST.students.length);
-  } catch (e) {
-    dbg('saveST() error: ' + (e.message || e));
-    note('✗ No se pudo guardar en IndexedDB (' + (e.message || e) + ')', false);
-  }
-  drawST();
-}
-async function delSt(m) {
-  if (!await confirmUI('¿Eliminar al alumno ' + m + ' de la lista? Perderá el acceso.')) return;
-  ST.students = ST.students.filter(s => s.m !== m);
-  ST.log.push({ t: new Date().toISOString(), a: 'baja', m });
-  await saveST();
-}
-$('#add').onclick = async () => {
-  const m = $('#am').value.trim(), w = $('#aw').value.trim();
-  if (!/^\d{6,12}$/.test(m)) { $('#dmsg').textContent = 'Matrícula no válida (6 a 12 dígitos).'; return; }
-  if (ST.students.some(s => s.m === m)) { $('#dmsg').textContent = 'Esa matrícula ya está en la lista.'; return; }
-  const t = new Date().toISOString();
-  ST.students.push({ m, n: $('#an').value.trim(), at: t, why: w });
-  ST.log.push({ t, a: 'alta', m, w });
-  $('#am').value = $('#an').value = $('#aw').value = '';
-  await saveST();
-};
-$('#fq').oninput = drawST;
-$('#exp').onclick = () => descargar('lista-clase-' + stamp() + '.csv', 'matricula,nombre,alta,motivo\n' + ST.students.map(s => [s.m, s.n || '', (s.at || '').slice(0, 10), s.why || ''].map(x => '"' + String(x).replace(/"/g, '""') + '"').join(',')).join('\n'));
-$('#hchip').onclick = () => document.querySelector('[data-t=doc]').click();
-$('#hAcc').onclick = async () => {
-  if (S.admin) { if (await confirmUI('¿Cerrar el acceso docente? Se reiniciará la página.')) location.reload(); }
-  else $('#tpanel').classList.toggle('hide');
-};
-$('#pvno').onclick = () => { PEND = []; $('#pv').classList.add('hide'); note('Carga cancelada. No se guardó nada.'); };
-$('#pvok').onclick = async () => {
-  if (!PEND.length) return;
-  note('Guardando…');
-  await loadStaff();
-  PEND.forEach(r => {
-    if (!ST.students.some(s => s.m === r.m)) {
-      const t = new Date().toISOString();
-      ST.students.push({ m: r.m, n: r.n, at: t, why: 'carga masiva' });
-      ST.log.push({ t, a: 'alta', m: r.m, w: 'carga masiva' });
-    }
-  });
-  PEND = [];
-  $('#pv').classList.add('hide');
-  await saveST();
-};
-$('#vfy').onclick = async () => {
-  note('Verificando…');
-  try {
-    const data = await idbGet('staff', 'list');
-    const n = data?.students?.length || 0;
-    await loadStaff();
-    note('Lista local: ' + n + ' alumnos guardados.', n > 0);
-  } catch (e) { note('✗ No se pudo verificar (' + (e.message || e) + ')', false); }
-};
-$('#tmb').onclick = async () => {
-  const m = $('#tm').value.trim();
-  if (!/^\d{6,12}$/.test(m)) return note('Matrícula no válida.', false);
-  const data = await idbGet('staff', 'list');
-  const exists = data?.students?.some(s => s.m === m);
-  note(exists ? '✓ La matrícula ' + m + ' está en la lista local.' : '✗ La matrícula ' + m + ' NO está en la lista local.', !!exists);
-};
-
-/* ======================= PUBLICAR Y QR ======================= */
-$('#publish').onclick = async () => {
-  if (!ST.students.length) { note('✗ No hay alumnos en la lista. Carga o agrega alumnos primero.', false); return; }
-  note('Generando archivo publicado…');
-  try {
-    const hashes = await Promise.all(ST.students.map(s => pbk(s.m)));
-    const resp = await fetch(window.location.href).catch(() => null);
-    let html = resp ? await resp.text() : document.documentElement.outerHTML;
-    if (!html || html.length < 100) html = document.documentElement.outerHTML;
-    html = html.replace(/<script[^>]*>[\s\S]*?window\.__ROSTER__[\s\S]*?<\/script>/gi, '');
-    html = html.replace(/<script[^>]*>[\s\S]*?window\.__AI_RULES__[\s\S]*?<\/script>/gi, '');
-    
-    const aiRules = $('#aiRules').value.trim() || '';
-    const inject = `<script>window.__ROSTER__ = ${JSON.stringify(hashes)}; window.__AI_RULES__ = ${JSON.stringify(aiRules)};<\/script>`;
-    html = html.replace('</head>', inject + '</head>');
-    
-    descargar('tutor-publicado.html', new Blob([html], { type: 'text/html;charset=utf-8' }));
-    note('✓ Archivo tutor-publicado.html descargado. Súbelo a GitHub Pages.', true);
-    $('#dirty-warn').classList.add('hide');
-    dbg('publish(): hashes=' + hashes.length + ' html size=' + html.length);
-  } catch (e) {
-    dbg('publish() error: ' + (e.message || e));
-    note('✗ No se pudo generar el archivo publicado: ' + (e.message || e), false);
-  }
-};
-
-$('#qrBtn').onclick = () => {
-  const currentUrl = window.location.href;
-  const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(currentUrl)}`;
-  $('#qr-img').src = qrUrl;
-  $('#qr-container').style.display = 'block';
-};
-$('#dirty-warn').onclick = () => document.querySelector('[data-t=doc]').click();
-
-/* ======================= EDITOR DE INSTRUCCIONES IA ======================= */
-async function loadAIRules() {
-  try {
-    const data = await idbGet('settings', 'aiRules');
-    if (data && data.text) $('#aiRules').value = data.text;
-    else if (window.__AI_RULES__) $('#aiRules').value = window.__AI_RULES__;
-  } catch (e) {}
-}
-$('#saveAIRules').onclick = async () => {
-  const text = $('#aiRules').value.trim();
-  try {
-    await idbPut('settings', { id: 'aiRules', text });
-    note('✓ Instrucciones globales guardadas. Recuerda volver a publicar el HTML para que se apliquen.', true);
-    $('#dirty-warn').classList.remove('hide');
-  } catch (e) {
-    note('✗ No se pudieron guardar las instrucciones.', false);
-  }
-};
-
-/* ======================= MENSAJES ======================= */
-function note(t, ok) {
-  const d = $('#dmsg');
-  d.textContent = t;
-  d.style.borderColor = ok === false ? '#B3261E' : ok ? '#2F6B5C' : '';
-  toast(t, ok === false);
-  dbg(t);
-}
-function toast(m, persist) {
-  let t = $('#toast');
-  if (!t) {
-    t = document.createElement('div');
-    t.id = 'toast'; t.setAttribute('role', 'alert');
-    t.style.cssText = 'position:fixed;left:16px;right:16px;bottom:calc(16px + env(safe-area-inset-bottom,0px));max-width:560px;margin:auto;background:#3A2A1E;color:#F3EBDD;border:1px solid var(--oro);border-radius:10px;padding:12px 16px;z-index:60;display:none;box-shadow:0 10px 25px rgba(0,0,0,0.5);font-weight:500;font-size:14px;';
-    document.body.appendChild(t);
-  }
-  t.textContent = m; t.style.display = 'block';
-  clearTimeout(t._h);
-  const ms = persist === true ? 0 : 8000;
-  if (ms > 0) t._h = setTimeout(() => t.style.display = 'none', ms);
-  else { t.onclick = () => (t.style.display = 'none'); }
-}
-window.alert = toast;
-function confirmUI(msg, word) {
-  return new Promise(res => {
-    const o = document.createElement('div');
-    o.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.6);backdrop-filter:blur(4px);z-index:70;display:flex;align-items:center;justify-content:center;padding:16px';
-    const b = document.createElement('div');
-    b.className = 'card'; b.style.cssText = 'max-width:440px;width:100%;margin:0;box-shadow:0 20px 40px rgba(0,0,0,0.4);';
-    const p = document.createElement('p'); p.style.whiteSpace = 'pre-wrap'; p.textContent = msg; b.appendChild(p);
-    let inp = null;
-    if (word) { inp = document.createElement('input'); inp.placeholder = 'Escribe ' + word; b.appendChild(inp); }
-    const r = document.createElement('div'); r.className = 'row'; r.style.marginTop = '16px';
-    const ok = document.createElement('button'), no = document.createElement('button');
-    ok.textContent = 'Confirmar'; no.textContent = 'Cancelar'; no.className = 's';
-    ok.id = 'cuiOk'; no.id = 'cuiNo';
-    if (word) ok.disabled = true;
-    if (inp) { inp.id = 'cuiIn'; inp.oninput = () => { ok.disabled = inp.value !== word; }; }
-    const done = v => { o.remove(); res(v); };
-    ok.onclick = () => done(true); no.onclick = () => done(false);
-    r.append(ok, no); b.appendChild(r); o.appendChild(b); document.body.appendChild(o);
-    (inp || no).focus();
-  });
-}
-
-/* ======================= MATERIAS ======================= */
-let MT = { periodo: '', items: [] };
-async function loadMaterias() {
-  try {
-    const data = await idbGet('materias', 'current');
-    if (data) MT = data;
-    MT.items = MT.items || [];
-    dbg('loadMaterias(): items=' + MT.items.length + ' periodo=' + (MT.periodo || ''));
-  } catch (e) { dbg('loadMaterias() error: ' + (e.message || e)); }
-  drawMT();
-}
-function drawMT() {
-  const sel = $('#materia'), cur = sel.value;
-  sel.innerHTML = MT.items.length
-    ? MT.items.map(m => '<option>' + esc(m) + '</option>').join('')
-    : '<option value="">(El docente aún no registra materias)</option>';
-  if (MT.items.includes(cur)) sel.value = cur;
-  $('label[for=materia]').textContent = 'Materia' + (MT.periodo ? ' · ' + MT.periodo : '');
-  $('#mper').value = MT.periodo || '';
-  $('#mlist').innerHTML = MT.items.map((m, i) => '<div class="row" style="margin:3px 0"><span>' + esc(m) + '</span><button class="s" data-md="' + i + '">Eliminar</button></div>').join('') || '<span class="mut">Sin materias registradas.</span>';
-  $('#mlist').querySelectorAll('[data-md]').forEach(b => b.onclick = () => delMat(+b.dataset.md));
-}
-async function saveMT(msg) {
-  try {
-    await idbPut('materias', { id: 'current', periodo: MT.periodo || '', items: MT.items });
-    note('✓ ' + msg + ' · ' + MT.items.length + ' materias · ' + new Date().toLocaleTimeString('es-MX'), true);
-    $('#dirty-warn').classList.remove('hide');
-  } catch (e) { note('✗ No se pudo guardar (' + (e.message || e) + ')', false); }
-  drawMT();
-}
-$('#mad').onclick = async () => {
-  const t = $('#mnom').value.trim().replace(/\s+/g, ' ');
-  if (!t) return;
-  await loadMaterias();
-  if (MT.items.some(x => x.toLowerCase() === t.toLowerCase())) return note('Esa materia ya está registrada.', false);
-  MT.items.push(t); $('#mnom').value = '';
-  await saveMT('Materia agregada');
-};
-$('#mpb').onclick = async () => {
-  const p = $('#mper').value.trim();
-  await loadMaterias();
-  MT.periodo = p;
-  await saveMT('Periodo guardado');
-};
-async function delMat(i) {
-  const t = MT.items[i];
-  if (t === undefined || !await confirmUI('¿Eliminar la materia «' + t + '»?')) return;
-  MT.items.splice(i, 1);
-  await saveMT('Materia eliminada');
-}
-$('#clsM').onclick = async () => {
-  if (!MT.items.length && !MT.periodo) return note('No hay materias ni periodo que borrar.');
-  if (!await confirmUI('Se borrarán ' + MT.items.length + ' materias y el periodo.')) return note('Borrado cancelado.');
-  try {
-    await idbDelete('materias', 'current');
-    MT = { periodo: '', items: [] };
-    note('✓ Materias y periodo borrados · ' + new Date().toLocaleTimeString('es-MX'), true);
-  } catch (e) { note('✗ No se pudo borrar (' + (e.message || e) + ')', false); }
-  drawMT();
-};
-$('#clsL').onclick = async () => {
-  await loadStaff();
-  const n = ST.students.length;
-  if (!n) return note('No hay lista que borrar.');
-  if (!await confirmUI('Se borrarán ' + n + ' alumnos de tu navegador. No se puede deshacer. Si necesitas respaldo, exporta antes el CSV.', 'BORRAR')) return note('Borrado cancelado. No se eliminó nada.');
-  try {
-    await idbDelete('staff', 'list');
-    ST = { students: [], log: [{ t: new Date().toISOString(), a: 'cierre de semestre: lista borrada (' + n + ' alumnos)', m: '' }] };
-    await idbPut('staff', { id: 'list', students: ST.students, log: ST.log });
-    note('✓ Lista borrada localmente · ' + new Date().toLocaleTimeString('es-MX'), true);
-  } catch (e) { note('✗ No se pudo borrar (' + (e.message || e) + ')', false); }
-  drawST();
-};
-
-/* ======================= CARGA MASIVA ======================= */
-$('#csv').onchange = async e => {
-  const f = e.target.files[0];
-  if (!f) return;
-  note('Leyendo «' + f.name + '»…');
-  try {
-    const txt = await f.text();
-    const rows = parseStudents(txt);
-    if (!rows.length) {
-      note('✗ No encontré matrículas (6 a 12 dígitos) en el archivo. Revisa el formato.', false);
-      e.target.value = '';
-      return;
-    }
-    await loadStaff();
-    const nw = rows.filter(r => !ST.students.some(s => s.m === r.m)).length;
-    PEND = rows;
-    showPv(rows);
-    const ok = await confirmUI('Se detectaron ' + rows.length + ' alumnos en «' + f.name + '»: ' + nw + ' nuevos y ' + (rows.length - nw) + ' que ya estaban en la lista.\n\n¿Guardar la lista?');
-    e.target.value = '';
-    if (ok) { await $('#pvok').onclick(); }
-    else { PEND = []; $('#pv').classList.add('hide'); note('Carga cancelada. No se guardó nada.'); }
-  } catch (er) {
-    note('✗ Error al procesar el archivo: ' + (er.message || er), false);
-    e.target.value = '';
-  }
-};
-function showPv(rows) {
-  const nw = rows.filter(r => !ST.students.some(s => s.m === r.m));
-  $('#pvt').textContent = 'Se detectaron ' + rows.length + ' alumnos (' + nw.length + ' nuevos, ' + (rows.length - nw.length) + ' ya estaban en la lista). Revisa y confirma:';
-  $('#pvtb').innerHTML = rows.map(r => '<tr><td>' + esc(r.m) + '</td><td>' + esc(r.n) + '</td></tr>').join('');
-  $('#pv').classList.remove('hide');
-}
 
 /* ======================= ARRANQUE ======================= */
-dbg('Recurso iniciado. Bloque 1 + Bloque 2 activos.');
+dbg('Recurso iniciado. Bloque 1 + Bloque 2 estables.');
 if (typeof puter === 'undefined') {
   $('#offb').classList.remove('hide');
   dbg('ADVERTENCIA: Puter.js no se cargó. La IA no funcionará.');
