@@ -84,12 +84,17 @@ h2,h3,h4{font-family:var(--font-title);margin-top:0;}
 .chart-bar span { position:absolute; top:-20px; left:50%; transform:translateX(-50%); font-size:11px; font-weight:bold; color:var(--tx);}
 .chart-label { font-size:10px; color:var(--mut); margin-top:4px; text-align:center; height:20px;}
 
-/* NUEVO: Radar de Interacción del Alumno */
+/* Radar de Interacción del Alumno */
 #student-radar { display:flex; gap:12px; flex-wrap:wrap; align-items:center; padding:12px; background:var(--card); border:1px solid var(--bd); border-radius:8px; margin-bottom:12px; font-size:12px; }
 .radar-item { display:flex; align-items:center; gap:6px; color:var(--mut); font-weight:500; }
 .radar-val { font-weight:bold; color:var(--azul2); font-size:14px; }
 .progress-bg { flex:1; min-width:100px; height:6px; background:var(--bd); border-radius:3px; overflow:hidden; }
 .progress-fill { height:100%; background:var(--oro); width:0%; transition:width 0.5s ease-out; }
+
+/* Multi-PDF */
+.pdf-list-item { display:flex; justify-content:space-between; align-items:center; background:var(--bg); padding:6px 10px; border-radius:6px; margin-top:6px; font-size:12px; border:1px solid var(--bd);}
+.pdf-list-item button { padding:2px 6px; font-size:11px; background:#B3261E;}
+#pdf-selector { margin-bottom:8px; padding:6px; font-size:13px; }
 </style>
 </head>
 <body>
@@ -126,14 +131,14 @@ h2,h3,h4{font-family:var(--font-title);margin-top:0;}
 <div><label for="modo">Modo de sesión</label><select id="modo">
 <option value="clasico">Diálogo socrático clásico</option><option value="abogado">Abogado del diablo</option><option value="caso">Caso financiero con dilema</option><option value="premortem">Pre-mortem de una decisión</option><option value="feynman">Enséñale al tutor (Feynman)</option></select></div></div>
 <label for="obj">Objetivo de aprendizaje y notas del docente (opcional)</label><textarea id="obj" rows="2"></textarea>
-<label for="pdf2">Material de estudio (PDF del tema, opcional)</label><input type="file" id="pdf2" accept="application/pdf">
-<p class="mut" id="smsg" style="margin-top:4px;">Sin PDF cargado.</p>
-<div class="row hide" id="pdfInfo2" style="margin-top:6px"><span class="pill" id="pdfName2"></span><button class="s" id="rmPdf">Quitar PDF</button></div>
+<label>Material de estudio (Máximo 3 PDFs)</label>
+<input type="file" id="pdf2" accept="application/pdf">
+<p class="mut" id="smsg" style="margin-top:4px;">Sin PDFs cargados (0 de 3).</p>
+<div id="pdf-list-container" style="margin-top:6px;"></div>
 <div class="row" style="margin-top:16px"><button id="start" style="font-size:16px; padding:12px 20px;">Iniciar sesión</button></div>
 </div>
 <div class="card hide" id="sess" style="padding:0; overflow:hidden;">
   
-  <!-- NUEVO: Radar de interacción del alumno -->
   <div id="student-radar">
     <div class="radar-item">💬 Interacciones: <span class="radar-val" id="r-turns">0</span></div>
     <div class="radar-item">💡 Pistas: <span class="radar-val" id="r-hints">0</span></div>
@@ -170,7 +175,10 @@ h2,h3,h4{font-family:var(--font-title);margin-top:0;}
 <div id="p-bit" class="hide">
 <div class="card"><h3 style="margin-top:0">Visor de PDF</h3>
 <input type="file" id="pdf1" accept="application/pdf"><p class="mut" id="vmsg">Carga un PDF para leerlo, anotarlo y usarlo como base del tutor.</p>
-<div id="vtools" class="row hide"><button class="s on2" data-tl="view">Leer</button><button class="s" data-tl="hl">Resaltar</button><button class="s" data-tl="pen">Lápiz</button><button class="s" id="zm">Zoom −</button><button class="s" id="zp">Zoom +</button><button class="s" id="clr">Borrar anotaciones</button></div>
+<div id="vtools" class="row hide">
+  <select id="pdf-selector" class="s" style="max-width:200px;"></select>
+  <button class="s on2" data-tl="view">Leer</button><button class="s" data-tl="hl">Resaltar</button><button class="s" data-tl="pen">Lápiz</button><button class="s" id="zm">Zoom −</button><button class="s" id="zp">Zoom +</button><button class="s" id="clr">Borrar anotaciones</button>
+</div>
 <div id="vsave" class="row hide" style="margin-top:8px"><button id="svO">Guardar PDF original</button><button id="svA">Guardar PDF anotado</button></div>
 <div id="pages" class="hide"></div></div>
 <div class="card"><div class="row"><button class="s" data-f="**">Negrita</button><button class="s" data-f="*">Cursiva</button><button class="s" data-f="# ">Título</button><button class="s" data-f="- ">Lista</button><button class="s" id="ins">Insertar transcripción</button></div>
@@ -246,7 +254,6 @@ h2,h3,h4{font-family:var(--font-title);margin-top:0;}
       <span>Recordar</span><span>Comprender</span><span>Aplicar</span><span>Analizar</span><span>Evaluar</span><span>Crear</span>
     </div>
     
-    <!-- NUEVO: Tabla de calificaciones y exportación -->
     <div class="row" style="margin-top:16px">
       <button id="exportGrades" style="background:var(--azul2);">📥 Exportar calificaciones a CSV</button>
     </div>
@@ -297,11 +304,11 @@ const MODOS = {
 };
 const S = {
   mat: '', admin: false, test: false, msgs: [], meta: [], ayuda: 0, p: {}, refl: null, fb: '',
-  t0: null, pdfName: '', pdfBytes: null, pdfPages: [], ctx: ''
+  t0: null, pdfs: [], ctx: '', currentViewPdfId: 0
 };
 const PS = 'amatia-labx-v2';
 const DB_NAME = 'amatia-tutor';
-const DB_VER = 3; 
+const DB_VER = 4; // Actualizado para múltiples PDFs
 const MAX_CTX_CHARS = 28000;
 
 /* ======================= DIAGNÓSTICO ======================= */
@@ -351,7 +358,7 @@ function openDB() {
       const db = e.target.result;
       if (!db.objectStoreNames.contains('staff')) db.createObjectStore('staff', { keyPath: 'id' });
       if (!db.objectStoreNames.contains('materias')) db.createObjectStore('materias', { keyPath: 'id' });
-      if (!db.objectStoreNames.contains('pdf')) db.createObjectStore('pdf', { keyPath: 'id' });
+      if (!db.objectStoreNames.contains('pdfs')) db.createObjectStore('pdfs', { keyPath: 'id' });
       if (!db.objectStoreNames.contains('settings')) db.createObjectStore('settings', { keyPath: 'id' });
     };
     req.onsuccess = e => { idb = e.target.result; resolve(idb); };
@@ -363,6 +370,15 @@ async function idbGet(store, key) {
   return new Promise((resolve, reject) => {
     const tx = db.transaction(store, 'readonly');
     const req = tx.objectStore(store).get(key);
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = e => reject(e.target.error);
+  });
+}
+async function idbGetAll(store) {
+  const db = await openDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(store, 'readonly');
+    const req = tx.objectStore(store).getAll();
     req.onsuccess = () => resolve(req.result);
     req.onerror = e => reject(e.target.error);
   });
@@ -425,7 +441,7 @@ function enterApp() {
   $('#hAcc').textContent = S.admin ? 'Cerrar acceso' : 'Acceso docente';
   
   loadMaterias();
-  restorePdfFromCache();
+  restorePdfsFromCache();
   restoreSession(); 
   if (S.admin) {
     loadStaff();
@@ -470,8 +486,8 @@ themeToggle.onclick = () => {
 function saveSession() {
   if (S.admin || !S.mat) return;
   const sessionData = {
-    p: S.p, msgs: S.msgs, meta: S.meta, ayuda: S.ayuda,
-    t0: S.t0, pdfName: S.pdfName, pdfPages: S.pdfPages
+    p: S.p, msgs: S.msgs, meta: S.meta, ayuda: S.ayuda, t0: S.t0,
+    pdfs: S.pdfs.map(p => ({ id: p.id, name: p.name, pages: p.pages }))
   };
   localStorage.setItem('amatia_session_' + S.mat, JSON.stringify(sessionData));
 }
@@ -484,7 +500,7 @@ function restoreSession() {
     if (!s.msgs || !s.msgs.length) return;
 
     S.p = s.p; S.msgs = s.msgs; S.meta = s.meta || []; S.ayuda = s.ayuda || 0; S.t0 = s.t0;
-    S.pdfName = s.pdfName || ''; S.pdfPages = s.pdfPages || [];
+    if (s.pdfs) S.pdfs = s.pdfs.map(p => ({ ...p, bytes: null })); // Bytes no se guardan en LocalStorage
     
     $('#setup').classList.add('hide');
     $('#sess').classList.remove('hide');
@@ -494,11 +510,9 @@ function restoreSession() {
     S.msgs.forEach(m => bub(m.role === 'user' ? 'us' : 'ia', m.content));
     stat();
     
-    if (S.pdfName) {
+    if (S.pdfs.length) {
       S.ctx = buildContext('');
-      $('#pdfName2').textContent = S.pdfName;
-      $('#pdfInfo2').classList.remove('hide');
-      $('#smsg').textContent = `PDF restaurado de caché: ${S.pdfName}`;
+      renderPdfList();
     }
     toast('Sesión anterior restaurada automáticamente.', false);
   } catch (e) { dbg('restoreSession error: ' + e.message); }
@@ -606,31 +620,57 @@ $('#tmb').onclick = async () => {
 
 /* ======================= CHAT Y PREGUNTAS ======================= */
 function buildContext(query) {
-  if (!S.pdfPages || !S.pdfPages.length) return '';
-  const full = S.pdfPages.filter(p => p.text.length > 20).map(p => `[p.${p.page}] ${p.text}`).join('\n\n');
+  let allPages = [];
+  S.pdfs.forEach(pdf => {
+    pdf.pages.forEach(p => {
+      if (p.text.length > 20) {
+        allPages.push({ id: pdf.id, name: pdf.name, page: p.page, text: p.text });
+      }
+    });
+  });
+
+  if (!allPages.length) return '';
+  
+  const full = allPages.map(p => `[${p.name}, p.${p.page}] ${p.text}`).join('\n\n');
   if (full.length <= MAX_CTX_CHARS) return full;
+  
   const terms = (query || S.p.tema || '').toLowerCase().split(/\W+/).filter(w => w.length > 3);
-  const scored = S.pdfPages.map(p => {
+  const scored = allPages.map(p => {
     const t = p.text.toLowerCase();
     const score = terms.reduce((a, w) => a + (t.includes(w) ? 1 : 0), 0);
     return { ...p, score };
   });
-  const top = scored.sort((a, b) => b.score - a.score).slice(0, 6);
+  
+  const top = scored.sort((a, b) => b.score - a.score).slice(0, 8);
   const pages = new Set();
   top.forEach(p => {
-    pages.add(p.page);
-    if (p.page > 1) pages.add(p.page - 1);
-    if (p.page < S.pdfPages.length) pages.add(p.page + 1);
+    pages.add(p.id + '_' + p.page);
+    // Añadir páginas vecinas
+    const idx = S.pdfs.find(x => x.id === p.id).pages.findIndex(x => x.page === p.page);
+    if (idx > 0) pages.add(p.id + '_' + (p.page - 1));
+    if (idx < S.pdfs.find(x => x.id === p.id).pages.length - 1) pages.add(p.id + '_' + (p.page + 1));
   });
-  return [...pages].sort((a, b) => a - b).map(n => `[p.${n}] ${S.pdfPages[n - 1].text}`).join('\n\n').slice(0, MAX_CTX_CHARS);
+  
+  const result = [];
+  pages.forEach(key => {
+    const [id, pageStr] = key.split('_');
+    const page = parseInt(pageStr);
+    const pdf = S.pdfs.find(x => x.id == id);
+    const p = pdf.pages.find(x => x.page === page);
+    if (p && p.text.length > 20) result.push({ name: pdf.name, page: p.page, text: p.text });
+  });
+
+  return result.sort((a, b) => a.name.localeCompare(b.name) || a.page - b.page)
+    .map(p => `[${p.name}, p.${p.page}] ${p.text}`)
+    .join('\n\n').slice(0, MAX_CTX_CHARS);
 }
 
 function sys(ctx) {
   const p = S.p;
   const aiRules = window.__AI_RULES__ || 'Ninguna instrucción adicional.';
   const material = ctx
-    ? `Material de estudio cargado (basa TODAS tus preguntas y respuestas en él; cita la página entre corchetes, p. ej. [p.3]):\n"""\n${ctx}\n"""`
-    : (S.pdfPages && S.pdfPages.length ? 'Hay un PDF cargado pero el tema/mensaje actual no coincide con su contenido. Pide al alumno que reformule o indique la sección.' : 'No hay material de estudio cargado.');
+    ? `Material de estudio cargado (basa TODAS tus preguntas y respuestas en él; cita el archivo y la página entre corchetes, p. ej. [Libro.pdf, p.3]):\n"""\n${ctx}\n"""`
+    : (S.pdfs.length ? 'Hay PDFs cargados pero el tema/mensaje actual no coincide con su contenido. Pide al alumno que reformule o indique la sección.' : 'No hay material de estudio cargado.');
   
   return `Eres el Tutor Socrático AmatIA LabX para finanzas y economía. Materia: ${p.materia}. Tema: ${p.tema}. Nivel: ${p.nivel}. Objetivos/notas del docente: ${p.obj || 'ninguno'}. Modo: ${MODOS[p.modo]}
 ${material}
@@ -638,8 +678,8 @@ INSTRUCCIONES GLOBALES DEL DOCENTE (obligatorias):
 ${aiRules}
 REGLAS DE GROUNDING (obligatorias):
 - Si hay material cargado, TODA pregunta y respuesta debe basarse en él.
-- Cita la página entre corchetes: [p.3], [p.7-8].
-- Si el alumno pregunta algo que NO está en el material, di: "Eso no aparece en el material cargado; ¿lo abordamos con lo que sí está en [p.X]?".
+- Cita el archivo y la página entre corchetes: [Libro.pdf, p.3] o [Guia.pdf, p.7-8].
+- Si el alumno pregunta algo que NO está en el material, di: "Eso no aparece en el material cargado; ¿lo abordamos con lo que sí está en [Archivo, p.X]?".
 - No inventes fórmulas, cifras ni definiciones que no estén en el material.
 - Si el material contradice el conocimiento general, prioriza el material y señala la discrepancia.
 Reglas generales: responde en español, máx. 110 palabras, UNA sola pregunta por turno. Nunca des la respuesta de inicio. Escalera de ayuda: 1 pregunta guía, 2 pista, 3 ejemplo análogo, 4 explicación breve solo si el alumno lo pide tras intentarlo. Aplica el marco Paul-Elder (propósito, supuestos, evidencia, implicaciones, puntos de vista) y exige estándares (claridad, precisión, exactitud, relevancia, profundidad, amplitud, lógica). Detecta el nivel de Bloom del alumno y sube la exigencia gradualmente. Todo cálculo numérico debe hacerse con la herramienta calc; no inventes cifras. No das asesoría de inversión. Si el mensaje del alumno es "[PISTA]", sube un escalón de ayuda.
@@ -648,7 +688,15 @@ Termina SIEMPRE con una última línea exacta: ##META bloom=<1-6> estandar=<est�
 
 function formatMD(text) {
   let html = esc(text);
-  html = html.replace(/\[p\.(\d+)\]/g, '<a class="cite-btn" data-page="$1" href="javascript:void(0)">[p.$1]</a>');
+  // Citas complejas: [Nombre.pdf, p.X]
+  html = html.replace(/\[([^\]]+\.pdf),\s*p\.(\d+)\]/gi, (match, name, page) => {
+    return `<a class="cite-btn" data-file="${name}" data-page="${page}" href="javascript:void(0)">[${name}, p.${page}]</a>`;
+  });
+  // Citas simples: [p.X]
+  html = html.replace(/\[p\.(\d+)\]/g, (match, page) => {
+    return `<a class="cite-btn" data-page="${page}" href="javascript:void(0)">[p.${page}]</a>`;
+  });
+  
   html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
   html = html.replace(/\*(.+?)\*/g, '<em>$1</em>');
   html = html.replace(/^\s*-\s+(.+)$/gm, '<li>$1</li>');
@@ -676,11 +724,19 @@ function bub(c, t) {
     d.querySelectorAll('.cite-btn').forEach(btn => {
       btn.onclick = () => {
         const page = parseInt(btn.dataset.page);
+        const fileName = btn.dataset.file;
         document.querySelector('[data-t=bit]').click();
         setTimeout(() => {
+          if (fileName) {
+            const pdf = S.pdfs.find(p => p.name === fileName || p.name.includes(fileName));
+            if (pdf) {
+              $('#pdf-selector').value = pdf.id;
+              renderViewer(pdf.id);
+            }
+          }
           const target = document.getElementById('pg-' + page);
           if (target) target.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        }, 100);
+        }, 150);
       };
     });
   }
@@ -702,7 +758,6 @@ function updateRadar() {
   $('#r-hints').textContent = hints;
   $('#r-level').textContent = currentBloom ? BL[currentBloom] : '—';
   
-  // Barra de progreso (0% a 100% basado en Bloom 1 al 6)
   const pct = currentBloom ? ((currentBloom - 1) / 5) * 100 : 0;
   $('#r-progress').style.width = pct + '%';
 }
@@ -710,7 +765,7 @@ function updateRadar() {
 function stat() {
   updateRadar();
   const b = S.meta.map(m => m.bloom).filter(Boolean);
-  const chipPdf = S.pdfName ? ` <span class="pdfchip">PDF: ${esc(S.pdfName)}</span>` : '';
+  const chipPdf = S.pdfs.length ? ` <span class="pdfchip">PDFs: ${S.pdfs.length}</span>` : '';
   $('#stat').innerHTML = `Turnos: ${S.msgs.filter(m => m.role === 'user').length} · Ayudas: ${S.ayuda} · Bloom: <span class="pill">${b.length ? BL[b[b.length - 1]] : '—'}</span>${chipPdf}`;
 }
 
@@ -783,7 +838,7 @@ $('#start').onclick = () => {
   S.msgs = []; S.meta = []; S.ayuda = 0; S.t0 = new Date(); $('#chat').innerHTML = '';
   $('#setup').classList.add('hide'); $('#sess').classList.remove('hide');
   $('#quick-prompts').classList.remove('hide');
-  stat(); // Inicializa el radar
+  stat();
   ask('Inicia la sesión con tu primera pregunta o propuesta.');
 };
 $('#send').onclick = () => { const t = $('#inp').value.trim(); if (!t) return; $('#inp').value = ''; bub('us', t); ask(t); };
@@ -822,10 +877,11 @@ function ind() {
 }
 function repMd() {
   const i = ind(), p = S.p;
-  return `# Reporte de sesión · Tutor Socrático AmatIA LabX\n\n- Matrícula: ${S.mat}${S.test ? ' (SESIÓN DE PRUEBA DEL DOCENTE)' : ''}\n- Fecha: ${(S.t0 || new Date()).toLocaleString('es-MX')}\n- Periodo: ${MT.periodo || '—'}\n- Materia: ${p.materia || '—'} · Tema: ${p.tema || '—'} · Nivel: ${p.nivel || '—'}\n- Modo: ${p.modo || '—'}\n- Material de estudio: ${S.pdfName || '—'}\n\n## Indicadores\n- Intervenciones del alumno: ${i.turnos}\n- Nivel de Bloom máximo: ${BL[i.bmax] || '—'} (promedio ${i.bprom})\n- Estándares Paul-Elder trabajados: ${i.est}\n- Ayudas solicitadas: ${S.ayuda}\n\n## Metacognición\n- Aprendí: ${S.refl ? S.refl.a : '—'}\n- Me confunde: ${S.refl ? S.refl.b : '—'}\n- Confianza: ${S.refl ? S.refl.c + '/5' : '—'}\n\n## Retroalimentación formativa\n${S.fb || '—'}\n\n## Transcripción\n${S.msgs.map(m => (m.role === 'user' ? '**Alumno:** ' : '**Tutor:** ') + strip(m.content)).join('\n\n')}\n\n---\nProyecto personal de AmatIA LabX · Responsable: Mtro. José Alfredo Ávila de la Rosa. Material educativo; no constituye asesoría de inversión.\n`;
+  const pdfsStr = S.pdfs.map(p => p.name).join(', ') || '—';
+  return `# Reporte de sesión · Tutor Socrático AmatIA LabX\n\n- Matrícula: ${S.mat}${S.test ? ' (SESIÓN DE PRUEBA DEL DOCENTE)' : ''}\n- Fecha: ${(S.t0 || new Date()).toLocaleString('es-MX')}\n- Periodo: ${MT.periodo || '—'}\n- Materia: ${p.materia || '—'} · Tema: ${p.tema || '—'} · Nivel: ${p.nivel || '—'}\n- Modo: ${p.modo || '—'}\n- Material de estudio: ${pdfsStr}\n\n## Indicadores\n- Intervenciones del alumno: ${i.turnos}\n- Nivel de Bloom máximo: ${BL[i.bmax] || '—'} (promedio ${i.bprom})\n- Estándares Paul-Elder trabajados: ${i.est}\n- Ayudas solicitadas: ${S.ayuda}\n\n## Metacognición\n- Aprendí: ${S.refl ? S.refl.a : '—'}\n- Me confunde: ${S.refl ? S.refl.b : '—'}\n- Confianza: ${S.refl ? S.refl.c + '/5' : '—'}\n\n## Retroalimentación formativa\n${S.fb || '—'}\n\n## Transcripción\n${S.msgs.map(m => (m.role === 'user' ? '**Alumno:** ' : '**Tutor:** ') + strip(m.content)).join('\n\n')}\n\n---\nProyecto personal de AmatIA LabX · Responsable: Mtro. José Alfredo Ávila de la Rosa. Material educativo; no constituye asesoría de inversión.\n`;
 }
 function repView() { $('#repv').innerHTML = S.msgs.length ? '<pre>' + esc(repMd()) + '</pre>' : 'Aún no hay sesión.'; }
-function pdf(title, text) {
+function pdfGen(title, text) {
   const { jsPDF } = window.jspdf, d = new jsPDF({ unit: 'pt', format: 'letter' }), M = 48;
   d.setFillColor(58, 42, 30); d.rect(0, 0, 612, 64, 'F');
   d.setFillColor(184, 137, 58); d.rect(0, 64, 612, 4, 'F');
@@ -843,7 +899,7 @@ function pdf(title, text) {
   });
   return d.output('blob');
 }
-$('#rPdf').onclick = () => S.msgs.length ? descargar(`reporte-${S.mat}-${stamp()}.pdf`, pdf('Reporte de sesión del Tutor Socrático', repMd())) : alert('Primero realiza una sesión.');
+$('#rPdf').onclick = () => S.msgs.length ? descargar(`reporte-${S.mat}-${stamp()}.pdf`, pdfGen('Reporte de sesión del Tutor Socrático', repMd())) : alert('Primero realiza una sesión.');
 $('#rMd').onclick = () => S.msgs.length ? descargar(`reporte-${S.mat}-${stamp()}.md`, repMd()) : alert('Primero realiza una sesión.');
 
 function md(t) {
@@ -857,7 +913,7 @@ document.querySelectorAll('[data-f]').forEach(b => b.onclick = () => {
 });
 $('#ins').onclick = () => { $('#nt').value += (S.msgs.length ? '\n\n' + repMd() : ''); $('#nt').oninput(); };
 $('#sMd').onclick = () => descargar(`bitacora-${stamp()}.md`, $('#nt').value);
-$('#sPdf').onclick = () => descargar(`bitacora-${stamp()}.pdf`, pdf('Bitácora de estudio', $('#nt').value));
+$('#sPdf').onclick = () => descargar(`bitacora-${stamp()}.pdf`, pdfGen('Bitácora de estudio', $('#nt').value));
 
 /* ======================= CONFIGURACIÓN Y MATERIAS ======================= */
 function audit() {
@@ -1039,7 +1095,7 @@ function parseStudents(text) {
   return out;
 }
 
-/* ======================= PUBLICAR, QR Y PDF ======================= */
+/* ======================= PUBLICAR Y QR ======================= */
 $('#publish').onclick = async () => {
   if (!ST.students.length) { note('✗ No hay alumnos en la lista. Carga o agrega alumnos primero.', false); return; }
   note('Generando archivo publicado…');
@@ -1070,8 +1126,10 @@ $('#qrBtn').onclick = () => {
   $('#qr-container').style.display = 'block';
 };
 
+/* ======================= MULTI-PDF Y VISOR ======================= */
 pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
-let tool = 'view', zoom = 100; const pgs = [];
+let tool = 'view', zoom = 100; let pgs = []; // Array global de páginas del PDF actual
+
 function setTool(t) {
   tool = t;
   document.querySelectorAll('[data-tl]').forEach(b => b.classList.toggle('on2', b.dataset.tl === t));
@@ -1096,75 +1154,134 @@ function wire(ov) {
   ov.onpointerup = ov.onpointercancel = () => { on = false; };
 }
 
-async function loadPdf(f) {
-  if (!f) return;
-  const m = t => { $('#vmsg').textContent = t; $('#smsg').textContent = t; };
-  m('Cargando PDF…');
-  try {
-    const buf = await f.arrayBuffer();
-    S.pdfName = f.name; S.pdfBytes = buf.slice(0);
-    const doc = await pdfjsLib.getDocument({ data: buf.slice(0) }).promise;
-    const box = $('#pages'); box.innerHTML = ''; pgs.length = 0;
-
-    S.pdfPages = [];
-    for (let i = 1; i <= doc.numPages; i++) {
-      const p = await doc.getPage(i), vp = p.getViewport({ scale: 1.6 });
-      const el = document.createElement('div'); el.className = 'pg'; el.style.width = zoom + '%';
-      el.id = 'pg-' + i;
-      const cv = document.createElement('canvas'), ov = document.createElement('canvas');
-      cv.width = ov.width = vp.width; cv.height = ov.height = vp.height;
-      ov.className = 'ink'; ov.style.width = '100%'; ov.style.height = '100%';
-      el.append(cv, ov); box.appendChild(el); wire(ov); pgs.push({ el, cv, ov });
-      await p.render({ canvasContext: cv.getContext('2d'), viewport: vp }).promise;
-      const c = await p.getTextContent();
-      const pageText = c.items.map(x => x.str).join(' ').replace(/\s+/g, ' ').trim();
-      S.pdfPages.push({ page: i, text: pageText });
-    }
-    S.ctx = buildContext('');
-    setTool('view');
-    ['#pages', '#vtools', '#vsave'].forEach(s => $(s).classList.remove('hide'));
-
-    const badge = S.pdfPages.length + ' págs · ' + S.ctx.length + ' chars';
-    if (S.ctx.length < 200) {
-      m('⚠ Este PDF no tiene texto extraíble (probablemente escaneado). El tutor no podrá basarse en él.');
-    } else {
-      m(`PDF cargado: ${f.name} (${badge}). El tutor lo usará como base.`);
-    }
-    $('#pdfName2').textContent = f.name + ' · ' + badge;
-    $('#pdfInfo2').classList.remove('hide');
-    stat();
-    saveSession();
-
-    try { await idbPut('pdf', { id: 'material', name: f.name, pages: S.pdfPages, at: Date.now() }); } catch (e) {}
-  } catch (e) { m('No pude abrir el PDF: ' + (e.message || e)); }
+function renderPdfList() {
+  const container = $('#pdf-list-container');
+  container.innerHTML = S.pdfs.map((p, i) => `
+    <div class="pdf-list-item">
+      <span>📄 ${esc(p.name)} (${p.pages.length} págs)</span>
+      <button class="s" onclick="removePdf(${i})">X</button>
+    </div>
+  `).join('');
+  $('#smsg').textContent = S.pdfs.length + ' de 3 PDFs cargados.';
 }
-$('#pdf1').onchange = e => loadPdf(e.target.files[0]);
-$('#pdf2').onchange = e => loadPdf(e.target.files[0]);
 
-$('#rmPdf').onclick = async () => {
-  S.pdfName = ''; S.pdfBytes = null; S.pdfPages = []; S.ctx = '';
-  $('#smsg').textContent = 'PDF quitado. El tutor ya no usará material.';
-  $('#vmsg').textContent = 'Carga un PDF para leerlo, anotarlo y usarlo como base del tutor.';
-  $('#pdfInfo2').classList.add('hide');
-  try { await idbDelete('pdf', 'material'); } catch (e) {}
-  stat();
+window.removePdf = async (index) => {
+  const pdf = S.pdfs[index];
+  S.pdfs.splice(index, 1);
+  if (pdf) await idbDelete('pdfs', pdf.id);
+  S.ctx = buildContext('');
+  renderPdfList();
   saveSession();
 };
 
-async function restorePdfFromCache() {
+async function loadPdf(f, isSetup = true) {
+  if (!f) return;
+  if (S.pdfs.length >= 3) { toast('Máximo 3 PDFs permitidos.', true); return; }
+  
+  const m = t => { $('#vmsg').textContent = t; $('#smsg').textContent = t; };
+  m('Cargando «' + f.name + '»…');
+  
   try {
-    const cached = await idbGet('pdf', 'material');
-    if (cached && cached.pages && cached.pages.length && !S.pdfPages.length) {
-      S.pdfName = cached.name; S.pdfPages = cached.pages; S.ctx = buildContext('');
-      $('#smsg').textContent = `PDF restaurado de caché: ${cached.name} (${cached.pages.length} págs).`;
-      $('#pdfName2').textContent = cached.name + ' · ' + cached.pages.length + ' págs';
-      $('#pdfInfo2').classList.remove('hide');
-      stat();
+    const buf = await f.arrayBuffer();
+    const doc = await pdfjsLib.getDocument({ data: buf.slice(0) }).promise;
+    
+    const pdfObj = {
+      id: Date.now(),
+      name: f.name,
+      bytes: buf.slice(0),
+      pages: []
+    };
+
+    for (let i = 1; i <= doc.numPages; i++) {
+      const p = await doc.getPage(i);
+      const c = await p.getTextContent();
+      const pageText = c.items.map(x => x.str).join(' ').replace(/\s+/g, ' ').trim();
+      pdfObj.pages.push({ page: i, text: pageText });
     }
-  } catch (e) {}
+
+    S.pdfs.push(pdfObj);
+    S.ctx = buildContext('');
+    
+    // Actualizar UI
+    renderPdfList();
+    
+    // Actualizar Selector del Visor
+    const sel = $('#pdf-selector');
+    sel.innerHTML = S.pdfs.map(p => `<option value="${p.id}">${esc(p.name)}</option>`).join('');
+    sel.value = pdfObj.id;
+
+    // Guardar en IndexedDB
+    try { await idbPut('pdfs', { id: pdfObj.id, name: pdfObj.name, pages: pdfObj.pages }); } catch (e) {}
+
+    if (isSetup && S.pdfs.length === 1) {
+      m(`✓ PDF cargado: ${f.name}. El tutor lo usará como base.`);
+    } else {
+      m(`✓ PDF añadido: ${f.name}. Total: ${S.pdfs.length}/3.`);
+    }
+    stat();
+    saveSession();
+
+    // Si estamos en el visor, renderizamos este nuevo PDF
+    if (!isSetup) {
+      renderViewer(pdfObj.id);
+      ['#pages', '#vtools', '#vsave'].forEach(s => $(s).classList.remove('hide'));
+    }
+
+  } catch (e) { m('No pude abrir el PDF: ' + (e.message || e)); dbg('loadPdf error: ' + e.message); }
 }
 
-$('#svO').onclick = () => S.pdfBytes && descargar(S.pdfName || 'material.pdf', new Blob([S.pdfBytes], { type: 'application/pdf' }));
+async function renderViewer(pdfId) {
+  const pdf = S.pdfs.find(p => p.id == pdfId);
+  if (!pdf) return;
+  
+  S.currentViewPdfId = pdf.id;
+  const box = $('#pages'); box.innerHTML = ''; pgs.length = 0;
+  const doc = await pdfjsLib.getDocument({ data: pdf.bytes ? pdf.bytes : await (await fetch(pdf.url)).arrayBuffer() }).promise;
+  
+  // Si no tenemos bytes (porque viene de cache y no lo cargaron en esta sesión), podríamos tener problemas.
+  // Pero como guardamos bytes en memoria, debería funcionar.
+  
+  for (let i = 1; i <= doc.numPages; i++) {
+    const p = await doc.getPage(i), vp = p.getViewport({ scale: 1.6 });
+    const el = document.createElement('div'); el.className = 'pg'; el.style.width = zoom + '%';
+    el.id = 'pg-' + i;
+    const cv = document.createElement('canvas'), ov = document.createElement('canvas');
+    cv.width = ov.width = vp.width; cv.height = ov.height = vp.height;
+    ov.className = 'ink'; ov.style.width = '100%'; ov.style.height = '100%';
+    el.append(cv, ov); box.appendChild(el); wire(ov); pgs.push({ el, cv, ov });
+    await p.render({ canvasContext: cv.getContext('2d'), viewport: vp }).promise;
+  }
+}
+
+$('#pdf-selector').onchange = e => {
+  renderViewer(e.target.value);
+};
+
+$('#pdf1').onchange = e => { loadPdf(e.target.files[0], false); e.target.value = ''; };
+$('#pdf2').onchange = e => { loadPdf(e.target.files[0], true); e.target.value = ''; };
+
+async function restorePdfsFromCache() {
+  try {
+    const cached = await idbGetAll('pdfs');
+    if (cached && cached.length) {
+      S.pdfs = cached.map(c => ({ ...c, bytes: null }));
+      S.ctx = buildContext('');
+      renderPdfList();
+      
+      const sel = $('#pdf-selector');
+      sel.innerHTML = S.pdfs.map(p => `<option value="${p.id}">${esc(p.name)}</option>`).join('');
+      
+      $('#smsg').textContent = `PDFs restaurados de caché: ${S.pdfs.length}/3.`;
+      stat();
+    }
+  } catch (e) { dbg('restorePdfs error: ' + e.message); }
+}
+
+$('#svO').onclick = () => {
+  const pdf = S.pdfs.find(p => p.id == S.currentViewPdfId);
+  if (pdf && pdf.bytes) descargar(pdf.name, new Blob([pdf.bytes], { type: 'application/pdf' }));
+  else toast('No se encontraron los bytes originales (recarga el PDF).', true);
+};
 $('#svA').onclick = () => {
   if (!pgs.length) return;
   const { jsPDF } = window.jspdf; let d = null;
@@ -1177,8 +1294,10 @@ $('#svA').onclick = () => {
     else d.addPage([w, h], o);
     d.addImage(t.toDataURL('image/jpeg', .85), 'JPEG', 0, 0, w, h);
   });
-  descargar('anotado-' + (S.pdfName || 'material.pdf'), d.output('blob'));
+  const pdf = S.pdfs.find(p => p.id == S.currentViewPdfId);
+  descargar('anotado-' + (pdf ? pdf.name : 'material.pdf'), d.output('blob'));
 };
+
 $('#newS').onclick = async () => {
   if (S.msgs.length && !await confirmUI('Se cerrará la sesión actual. Si quieres su reporte, genéralo antes. ¿Continuar?')) return;
   S.msgs = []; S.meta = []; S.ayuda = 0; S.refl = null; S.fb = ''; S.t0 = null;
@@ -1188,8 +1307,8 @@ $('#newS').onclick = async () => {
   clearSession();
 };
 
-/* ======================= NUEVO: DASHBOARD Y CALIFICACIONES ======================= */
-let currentGrades = []; // Almacena temporalmente los resultados para exportar
+/* ======================= DASHBOARD Y CALIFICACIONES ======================= */
+let currentGrades = []; 
 
 $('#rv').onchange = async e => {
   $('#rvo').innerHTML = '';
@@ -1200,7 +1319,6 @@ $('#rv').onchange = async e => {
   for (const f of e.target.files) {
     const text = await f.text();
     
-    // Regex para extraer datos del reporte
     const maxMatch = text.match(/Nivel de Bloom máximo:\s*([A-Za-z]+)\s*\(promedio\s+([\d.]+)\)/i);
     const turnMatch = text.match(/Intervenciones del alumno:\s*(\d+)/i);
     
@@ -1221,10 +1339,8 @@ $('#rv').onchange = async e => {
       turns = parseInt(turnMatch[1]);
     }
 
-    // Lógica de calificación sugerida (0 a 10)
-    // Base: Bloom promedio (ej. 4.5 * 1.5 = 6.75) + Bono por interacciones (min 2 puntos)
     let grade = (bloomProm * 1.5) + Math.min(turns * 0.5, 2);
-    if (!maxMatch) grade = 0; // Si no hay datos, calificación 0
+    if (!maxMatch) grade = 0; 
     grade = Math.min(Math.max(grade, 0), 10).toFixed(1);
 
     currentGrades.push({
@@ -1246,7 +1362,6 @@ $('#rv').onchange = async e => {
     $('#st-avg').textContent = (sumBloom / count).toFixed(1);
     $('#st-max').textContent = maxBloom.toFixed(1);
 
-    // Renderizar gráfica
     const container = $('#chart-bars');
     container.innerHTML = '';
     const maxVal = Math.max(...Object.values(bloomCounts), 1);
@@ -1265,7 +1380,6 @@ $('#rv').onchange = async e => {
       container.appendChild(wrapper);
     }
 
-    // Renderizar Tabla de Calificaciones
     const tbody = $('#gradeBody');
     tbody.innerHTML = currentGrades.map(g => `
       <tr style="border-bottom:1px solid var(--bd);">
@@ -1337,7 +1451,7 @@ function confirmUI(msg, word) {
 }
 
 /* ======================= ARRANQUE ======================= */
-dbg('Recurso iniciado. Bloque 1 + 2 + 3 + 4 listos.');
+dbg('Recurso iniciado. Multi-PDF (máx 3) activo.');
 </script>
 </body>
 </html>
