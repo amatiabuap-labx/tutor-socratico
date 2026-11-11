@@ -1,0 +1,1685 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Laboratorio interactivo BUAP AmatIA LabX: Valor Presente con vidas útiles diferentes (MCM). Casos de logística, bombeo, energía e inflación.">
+  <meta name="author" content="Mtro. José Alfredo Ávila de la Rosa — BUAP Facultad de Ingeniería">
+  <meta property="og:title" content="BUAP | AmatIA LabX - VP con Vidas Diferentes (MCM)">
+  <meta property="og:description" content="Recurso académico interactivo con solucionario docente, gamificación y dictamen PDF.">
+  <meta property="og:image" content="https://tudominio.github.io/og-cover.png">
+  <meta property="og:type" content="website">
+  <meta name="theme-color" content="#003B5C">
+  <title>BUAP | AmatIA LabX - Valor Presente con Vidas Diferentes (MCM)</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚖️</text></svg>">
+
+  <!-- Tailwind CDN (demo). Para producción usa ./dist/styles.css (ver README) -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
+  <script>
+    window.MathJax = {
+      tex: { inlineMath: [['$','$'],['\\(','\\)']], displayMath: [['$$','$$'],['\\[','\\]']] },
+      svg: { fontCache: 'global' },
+      startup: { typeset: true }
+    };
+  </script>
+  <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+  <script>
+    tailwind.config = {
+      theme: { extend: {
+        fontFamily: { sans: ['Inter','sans-serif'], mono: ['JetBrains Mono','monospace'] },
+        colors: {
+          buap: { DEFAULT:'#003B5C', dark:'#00253B', light:'#00588A', accent:'#00A3E0' },
+          amatia: { primary:'#0D9488', accent:'#14B8A6', surface:'#F0FDFA', dark:'#115E59' }
+        }
+      }}
+    }
+  </script>
+
+  <style>
+    @keyframes floatSoft { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-4px)} }
+    .anim-float { animation: floatSoft 3s ease-in-out infinite; }
+    @keyframes pulseGlow { 0%,100%{box-shadow:0 0 12px rgba(20,184,166,.4)} 50%{box-shadow:0 0 22px rgba(20,184,166,.85)} }
+    .badge-glow { animation: pulseGlow 2s infinite ease-in-out; }
+    .custom-scroll::-webkit-scrollbar { width:6px; height:6px }
+    .custom-scroll::-webkit-scrollbar-thumb { background:#003B5C40; border-radius:9999px }
+    .card-hover-effect { transition: all .3s cubic-bezier(.4,0,.2,1) }
+    .card-hover-effect:hover { transform: translateY(-2px); box-shadow: 0 12px 24px -10px rgba(0,59,92,.15) }
+    .field-error { outline: 2px solid #f43f5e !important; outline-offset: 2px; border-radius: .75rem; }
+
+    @media print {
+      body * { visibility: hidden; }
+      #reporte-imprimible, #reporte-imprimible * { visibility: visible; }
+      #reporte-imprimible { position:absolute; left:0; top:0; width:100%; margin:0; padding:0; display:block !important; }
+      .no-print { display:none !important; }
+    }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-800 font-sans antialiased min-h-screen flex flex-col justify-between custom-scroll">
+
+  <!-- HEADER con progreso integrado -->
+  <header class="bg-gradient-to-r from-buap-dark via-buap to-buap-light text-white shadow-xl sticky top-0 z-40 border-b-2 border-amatia-accent no-print">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex flex-wrap items-center justify-between gap-4">
+      <div class="flex items-center space-x-3.5">
+        <div class="w-11 h-11 rounded-2xl bg-white/10 backdrop-blur-md flex items-center justify-center border border-white/20 shadow-inner anim-float" aria-hidden="true">
+          <i class="fa-solid fa-scale-balanced text-2xl text-cyan-300"></i>
+        </div>
+        <div>
+          <div class="flex items-center space-x-2 flex-wrap">
+            <span class="text-[11px] uppercase tracking-widest font-extrabold text-cyan-300 bg-white/10 px-2 py-0.5 rounded">BUAP</span>
+            <span class="text-xs uppercase tracking-wider font-semibold text-teal-200">Mtro. José Alfredo Ávila de la Rosa</span>
+          </div>
+          <h1 class="text-base sm:text-lg font-bold tracking-tight text-white flex items-center gap-2">
+            AmatIA LabX <span class="text-xs font-normal opacity-85 hidden md:inline">| VP con Vidas Útiles Diferentes (MCM)</span>
+          </h1>
+        </div>
+      </div>
+
+      <div class="flex items-center space-x-2 sm:space-x-3 flex-wrap">
+        <button onclick="abrirSolucionarioCatedra()" aria-label="Abrir solucionario docente"
+                class="bg-amber-400 hover:bg-amber-300 text-slate-900 font-black px-3 sm:px-4 py-2 rounded-xl text-xs flex items-center gap-2 transition-all shadow-md active:scale-95 border border-amber-300">
+          <i class="fa-solid fa-chalkboard-user text-sm"></i>
+          <span class="hidden sm:inline">Cátedra y Solucionario</span>
+          <span class="sm:hidden">Cátedra</span>
+        </button>
+
+        <div class="bg-slate-900/60 border border-teal-500/40 px-3.5 py-1.5 rounded-full flex items-center space-x-2.5 shadow-inner">
+          <div class="flex items-center space-x-1.5">
+            <i id="trophyIcon" class="fa-solid fa-seedling text-amber-400 text-sm" aria-hidden="true"></i>
+            <span id="rankBadge" class="text-xs font-bold text-amber-300 uppercase tracking-wider">Iniciación</span>
+          </div>
+          <div class="h-4 w-px bg-slate-700"></div>
+          <div class="flex items-center space-x-1">
+            <i class="fa-solid fa-bolt text-teal-400 text-xs" aria-hidden="true"></i>
+            <span id="scoreBadge" class="font-mono text-xs font-bold text-teal-300">0 / 100 XP</span>
+          </div>
+          <div class="h-4 w-px bg-slate-700"></div>
+          <div class="flex items-center space-x-1" title="Pistas consultadas">
+            <i class="fa-solid fa-wand-magic-sparkles text-amber-400 text-xs" aria-hidden="true"></i>
+            <span id="pistasBadge" class="font-mono text-xs font-bold text-amber-300">0</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="w-full bg-slate-900/40 h-2 overflow-hidden shadow-inner">
+      <div id="progressBar" class="bg-gradient-to-r from-teal-500 via-cyan-400 to-amber-400 h-full transition-all duration-700 ease-out" style="width: 0%"></div>
+    </div>
+  </header>
+
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 w-full flex-grow space-y-6">
+
+    <!-- Banner -->
+    <div class="bg-white rounded-2xl p-5 shadow-sm border border-slate-200/90 relative overflow-hidden">
+      <div class="absolute -right-10 -top-10 w-48 h-48 bg-teal-50 rounded-full blur-2xl pointer-events-none" aria-hidden="true"></div>
+      <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+        <div>
+          <div class="inline-flex items-center gap-1.5 bg-buap/10 text-buap text-xs font-bold px-3 py-1 rounded-lg border border-buap/20 mb-2">
+            <i class="fa-solid fa-book-open-reader text-buap" aria-hidden="true"></i> Blank &amp; Tarquin • Sección 5.3
+          </div>
+          <h2 class="text-xl sm:text-2xl font-black text-buap tracking-tight">
+            Análisis de Valor Presente sobre el Mínimo Común Múltiplo (MCM)
+          </h2>
+          <p class="text-xs sm:text-sm text-slate-600 mt-1 max-w-4xl leading-relaxed">
+            <strong>Requisito de Servicio Igual:</strong> para comparar alternativas con vidas desiguales mediante Valor Presente ($VP$), se iguala el servicio al <strong>Mínimo Común Múltiplo (MCM)</strong> de sus vidas útiles, asumiendo reinversiones idénticas al término de cada ciclo.
+          </p>
+        </div>
+        <div class="flex items-center gap-2 flex-shrink-0 flex-wrap">
+          <button onclick="reiniciarActividad()" aria-label="Reiniciar actividad"
+                  class="text-xs bg-rose-50 hover:bg-rose-100 text-rose-800 font-bold px-3.5 py-2 rounded-xl border border-rose-300 flex items-center gap-2 transition-all shadow-sm">
+            <i class="fa-solid fa-rotate-left text-rose-600" aria-hidden="true"></i> Reiniciar
+          </button>
+          <a href="https://escuelaesam.pe/biblioteca/assets/uploads/libro_689e4eed112a9.pdf" target="_blank" rel="noopener noreferrer"
+             class="text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold px-3 py-2 rounded-xl border border-slate-300 flex items-center gap-2 transition-all">
+            <i class="fa-solid fa-file-pdf text-rose-600" aria-hidden="true"></i> Texto
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Ficha estudiante -->
+    <section class="bg-white rounded-2xl p-5 shadow-sm border border-slate-200" aria-labelledby="ficha-titulo">
+      <h3 id="ficha-titulo" class="text-xs sm:text-sm font-bold text-buap uppercase tracking-wider mb-3 flex items-center gap-2">
+        <i class="fa-solid fa-user-check text-teal-600" aria-hidden="true"></i> Ficha de Acreditación del Estudiante
+      </h3>
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div>
+          <label for="alumnoNombre" class="block text-xs font-semibold text-slate-600 mb-1">Nombre Completo *</label>
+          <input type="text" id="alumnoNombre" placeholder="Ej. Mariana Sánchez Rojas"
+                 class="w-full text-sm px-3.5 py-2.5 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-teal-500 font-medium">
+        </div>
+        <div>
+          <label for="alumnoMatricula" class="block text-xs font-semibold text-slate-600 mb-1">Matrícula BUAP *</label>
+          <input type="text" id="alumnoMatricula" placeholder="9 dígitos" pattern="\d{9}" maxlength="9" inputmode="numeric"
+                 class="w-full text-sm px-3.5 py-2.5 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-teal-500 font-mono">
+        </div>
+        <div>
+          <label for="alumnoFecha" class="block text-xs font-semibold text-slate-600 mb-1">Fecha de Registro</label>
+          <input type="text" id="alumnoFecha" readonly
+                 class="w-full text-sm px-3.5 py-2.5 rounded-xl border border-slate-200 bg-slate-100 font-mono text-slate-700 font-semibold">
+        </div>
+      </div>
+    </section>
+
+    <!-- ======================= CASO 1 ======================= -->
+    <section class="bg-white rounded-2xl p-6 shadow-sm border border-slate-200 space-y-5 card-hover-effect" aria-labelledby="c1-titulo">
+      <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center pb-4 border-b border-slate-100 gap-3">
+        <div>
+          <div class="flex items-center gap-2 flex-wrap">
+            <span class="bg-buap text-white font-extrabold text-xs px-2.5 py-1 rounded-md">CASO 1</span>
+            <span class="text-xs font-semibold text-slate-500">Logística Puebla–Tlaxcala • TMAR = 10%</span>
+          </div>
+          <h3 id="c1-titulo" class="text-lg font-bold text-slate-900 mt-1">Flotilla de Reparto Urbano (3 vs. 6 años)</h3>
+        </div>
+        <div id="statusC1" class="text-xs font-bold px-3 py-1.5 rounded-full bg-slate-100 text-slate-600 flex items-center gap-1.5 transition-all">
+          <i class="fa-solid fa-clock" aria-hidden="true"></i> Pendiente
+        </div>
+      </div>
+
+      <div class="bg-slate-50 rounded-xl p-4 border border-slate-200 text-sm text-slate-700 leading-relaxed">
+        <p class="font-medium text-slate-800 mb-2"><i class="fa-solid fa-truck-ramp-box text-buap mr-1" aria-hidden="true"></i> Contexto:</p>
+        <p>Paquetería en Parque Industrial Puebla 2000 analiza dos opciones con vidas desiguales a TMAR <strong>10% ($i=0.10$)</strong>:</p>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-3">
+          <div class="bg-white p-3.5 rounded-xl border border-slate-200 space-y-1 text-xs">
+            <h4 class="font-bold text-buap text-sm flex justify-between flex-wrap gap-1">
+              <span>Opción A: Dos Camionetas Utilitarias</span>
+              <span class="bg-amber-100 text-amber-800 font-bold px-2 py-0.5 rounded">Vida = 3 años</span>
+            </h4>
+            <p>• $P$: <strong class="text-rose-600 font-mono">-380,000 MXN</strong></p>
+            <p>• $I$: <strong class="text-emerald-700 font-mono">+240,000 MXN/año</strong></p>
+            <p>• $CAO$: <strong class="text-rose-600 font-mono">-65,000 MXN/año</strong></p>
+            <p>• $VS$: <strong class="text-teal-700 font-mono">+60,000 MXN</strong></p>
+          </div>
+          <div class="bg-white p-3.5 rounded-xl border border-slate-200 space-y-1 text-xs">
+            <h4 class="font-bold text-buap text-sm flex justify-between flex-wrap gap-1">
+              <span>Opción B: Camión Diésel Mediano</span>
+              <span class="bg-teal-100 text-teal-800 font-bold px-2 py-0.5 rounded">Vida = 6 años</span>
+            </h4>
+            <p>• $P$: <strong class="text-rose-600 font-mono">-650,000 MXN</strong></p>
+            <p>• $I$: <strong class="text-emerald-700 font-mono">+260,000 MXN/año</strong></p>
+            <p>• $CAO$: <strong class="text-rose-600 font-mono">-45,000 MXN/año</strong></p>
+            <p>• $VS$ año 6: <strong class="text-teal-700 font-mono">+110,000 MXN</strong></p>
+          </div>
+        </div>
+      </div>
+
+      <div class="bg-amber-50/70 border border-amber-200 rounded-xl p-4 space-y-2">
+        <div class="flex items-center justify-between flex-wrap gap-2">
+          <span class="text-xs font-bold text-amber-900 flex items-center gap-1.5">
+            <i class="fa-solid fa-compass text-amber-600" aria-hidden="true"></i> Pensamiento Crítico:
+          </span>
+          <button onclick="togglePista('pista1')" aria-label="Mostrar pista del caso 1"
+                  class="text-[11px] font-bold text-teal-700 hover:text-teal-900 flex items-center gap-1">
+            <i class="fa-solid fa-wand-magic-sparkles" aria-hidden="true"></i>
+            <span id="btnPista1">Ver pista y fórmulas</span>
+          </button>
+        </div>
+        <p class="text-xs text-slate-700 leading-relaxed">
+          ¿Por qué comparar 3 vs 6 años sin extender al MCM sesga la evaluación? ¿Cómo se representa el flujo neto del año 3 en la Opción A al rescatar el activo y reinvertir simultáneamente?
+        </p>
+        <div id="pista1" class="hidden bg-white p-3.5 rounded-lg border border-amber-300 text-xs text-slate-700 space-y-2">
+          <p class="text-teal-900 font-bold">💡 Descuento al 10%:</p>
+          <p>• $(1+0.10)^{-3} = 1/1.331 \approx$ <span class="font-mono font-bold">0.751315</span></p>
+          <p>• $(1+0.10)^{-6} = 1/1.771561 \approx$ <span class="font-mono font-bold">0.564474</span></p>
+          <p>• $\left[1-(1+0.10)^{-6}\right]/0.10 \approx$ <span class="font-mono font-bold">4.355261</span></p>
+          <p class="text-buap font-semibold">Flujo neto año 3 Opción A: $+60\text{k} - 380\text{k} = \mathbf{-320,000\text{ MXN}}$.</p>
+        </div>
+      </div>
+
+      <div class="bg-slate-100/80 rounded-xl p-4 border border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div>
+          <label for="c1_mcm" class="block text-xs font-bold text-slate-800 uppercase tracking-wider">1. MCM de 3 y 6 años *</label>
+          <p class="text-[11px] text-slate-500">$3=3^1$; $6=2^1\times3^1 \rightarrow MCM=6$ años.</p>
+        </div>
+        <div class="w-full sm:w-44">
+          <input type="number" id="c1_mcm" placeholder="Años..." aria-label="MCM caso 1"
+                 class="w-full text-center text-sm font-mono font-bold px-3 py-2 rounded-xl border border-slate-300 bg-white focus:ring-2 focus:ring-buap">
+        </div>
+      </div>
+
+      <div class="border border-teal-100 bg-teal-50/40 rounded-xl p-4 space-y-4">
+        <h4 class="text-xs font-bold text-amatia-dark uppercase tracking-wider flex items-center gap-2">
+          <i class="fa-solid fa-list-check text-teal-600" aria-hidden="true"></i> 2. Sumatorias VP
+        </h4>
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <div>
+            <label for="c1_vpIngA" class="block text-xs font-semibold text-slate-700 mb-1">Σ VP Ingresos (A):</label>
+            <select id="c1_vpIngA" class="w-full text-xs px-3 py-2 rounded-xl border border-slate-300 font-mono bg-white">
+              <option value="">-- Selecciona --</option>
+              <option value="1045263">+1,045,263 MXN</option>
+              <option value="1440000">+1,440,000 MXN</option>
+              <option value="720000">+720,000 MXN</option>
+            </select>
+          </div>
+          <div>
+            <label for="c1_vpCaoA" class="block text-xs font-semibold text-slate-700 mb-1">Σ VP CAO (A):</label>
+            <select id="c1_vpCaoA" class="w-full text-xs px-3 py-2 rounded-xl border border-slate-300 font-mono bg-white">
+              <option value="">-- Selecciona --</option>
+              <option value="-283092">-283,092 MXN</option>
+              <option value="-390000">-390,000 MXN</option>
+              <option value="-195000">-195,000 MXN</option>
+            </select>
+          </div>
+          <div>
+            <label for="c1_vpSalA" class="block text-xs font-semibold text-slate-700 mb-1">Σ VP Salvamento (A):</label>
+            <select id="c1_vpSalA" class="w-full text-xs px-3 py-2 rounded-xl border border-slate-300 font-mono bg-white">
+              <option value="">-- Selecciona --</option>
+              <option value="78947">+78,947 MXN</option>
+              <option value="120000">+120,000 MXN</option>
+              <option value="45079">+45,079 MXN</option>
+            </select>
+          </div>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2 border-t border-teal-200">
+          <div>
+            <label for="c1_vpIngB" class="block text-xs font-semibold text-slate-700 mb-1">Σ VP Ingresos (B):</label>
+            <select id="c1_vpIngB" class="w-full text-xs px-3 py-2 rounded-xl border border-slate-300 font-mono bg-white">
+              <option value="">-- Selecciona --</option>
+              <option value="1132368">+1,132,368 MXN</option>
+              <option value="1560000">+1,560,000 MXN</option>
+              <option value="875400">+875,400 MXN</option>
+            </select>
+          </div>
+          <div>
+            <label for="c1_vpCaoB" class="block text-xs font-semibold text-slate-700 mb-1">Σ VP CAO (B):</label>
+            <select id="c1_vpCaoB" class="w-full text-xs px-3 py-2 rounded-xl border border-slate-300 font-mono bg-white">
+              <option value="">-- Selecciona --</option>
+              <option value="-195987">-195,987 MXN</option>
+              <option value="-270000">-270,000 MXN</option>
+              <option value="-145200">-145,200 MXN</option>
+            </select>
+          </div>
+          <div>
+            <label for="c1_vpSalB" class="block text-xs font-semibold text-slate-700 mb-1">VP Salvamento (B):</label>
+            <select id="c1_vpSalB" class="w-full text-xs px-3 py-2 rounded-xl border border-slate-300 font-mono bg-white">
+              <option value="">-- Selecciona --</option>
+              <option value="62092">+62,092 MXN</option>
+              <option value="110000">+110,000 MXN</option>
+              <option value="48200">+48,200 MXN</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div class="border border-slate-200 bg-slate-50/80 rounded-xl p-4 space-y-3">
+        <h4 class="text-xs font-bold text-slate-800 uppercase tracking-wider flex items-center gap-2">
+          <i class="fa-solid fa-calculator text-buap" aria-hidden="true"></i> 3. VP Neto Total y Criterio
+        </h4>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label for="c1_vpTotalA" class="block text-xs font-semibold text-slate-700 mb-1">VP Total Neto Opción A *</label>
+            <input type="number" step="1" id="c1_vpTotalA" placeholder="Ej. 270118"
+                   class="w-full text-xs sm:text-sm px-3 py-2 rounded-xl border border-slate-300 font-mono">
+          </div>
+          <div>
+            <label for="c1_vpTotalB" class="block text-xs font-semibold text-slate-700 mb-1">VP Total Neto Opción B *</label>
+            <input type="number" step="1" id="c1_vpTotalB" placeholder="Ej. 348473"
+                   class="w-full text-xs sm:text-sm px-3 py-2 rounded-xl border border-slate-300 font-mono">
+          </div>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
+          <div>
+            <label for="c1_factorEstrategico" class="block text-xs font-semibold text-slate-700 mb-1">Aspecto Cualitativo *</label>
+            <select id="c1_factorEstrategico" class="w-full text-xs p-2 rounded-xl border border-slate-300 bg-white">
+              <option value="">-- Selecciona --</option>
+              <option value="correcto">A: flexibilidad y menor riesgo unitario; B: eficiencia y menor costo operativo.</option>
+              <option value="incorrecto1">Comprar siempre el más barato.</option>
+              <option value="incorrecto2">No recomprar camionetas por el seguro.</option>
+            </select>
+          </div>
+          <div>
+            <label for="c1_seleccion" class="block text-xs font-semibold text-slate-700 mb-1">Alternativa Seleccionada *</label>
+            <select id="c1_seleccion" class="w-full text-xs p-2 rounded-xl border border-slate-300 bg-white font-medium">
+              <option value="">-- Elige --</option>
+              <option value="B">Opción B (Mayor VP: +348,473)</option>
+              <option value="A">Opción A (VP: +270,118)</option>
+            </select>
+          </div>
+        </div>
+        <div>
+          <label for="c1_justificacion" class="block text-xs font-semibold text-slate-700 mb-1">Dictamen Técnico *</label>
+          <textarea id="c1_justificacion" rows="2" placeholder="Argumenta comparando el VP creado en 6 años y la continuidad operativa..." class="w-full text-xs p-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-buap"></textarea>
+        </div>
+      </div>
+
+      <div class="flex justify-end">
+        <button onclick="validarCaso1()" class="bg-buap hover:bg-buap-dark text-white font-bold text-xs sm:text-sm px-5 py-2.5 rounded-xl shadow-md transition-all flex items-center gap-2 active:scale-95">
+          <i class="fa-solid fa-check-double" aria-hidden="true"></i> Calificar Caso 1
+        </button>
+      </div>
+    </section>
+
+    <!-- ======================= CASO 2 ======================= -->
+    <section class="bg-white rounded-2xl p-6 shadow-sm border border-slate-200 space-y-5 card-hover-effect" aria-labelledby="c2-titulo">
+      <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center pb-4 border-b border-slate-100 gap-3">
+        <div>
+          <div class="flex items-center gap-2 flex-wrap">
+            <span class="bg-amatia-dark text-white font-extrabold text-xs px-2.5 py-1 rounded-md">CASO 2</span>
+            <span class="text-xs font-semibold text-slate-500">Cuautlancingo • TMAR = 12%</span>
+          </div>
+          <h3 id="c2-titulo" class="text-lg font-bold text-slate-900 mt-1">Bombeo y Tratamiento (3 vs. 4 años)</h3>
+        </div>
+        <div id="statusC2" class="text-xs font-bold px-3 py-1.5 rounded-full bg-slate-100 text-slate-600 flex items-center gap-1.5 transition-all">
+          <i class="fa-solid fa-clock" aria-hidden="true"></i> Pendiente
+        </div>
+      </div>
+
+      <div class="bg-slate-50 rounded-xl p-4 border border-slate-200 text-sm text-slate-700 leading-relaxed">
+        <p class="font-medium text-slate-800 mb-2"><i class="fa-solid fa-faucet text-teal-700 mr-1" aria-hidden="true"></i> Contexto:</p>
+        <p>Manufacturera automotriz en Cuautlancingo requiere equipamiento a TMAR <strong>12% ($i=0.12$)</strong>:</p>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-3">
+          <div class="bg-white p-3.5 rounded-xl border border-slate-200 space-y-1 text-xs">
+            <h4 class="font-bold text-buap text-sm flex justify-between flex-wrap gap-1">
+              <span>Sistema 1: Centrífuga Estándar</span><span class="bg-amber-100 text-amber-800 font-bold px-2 py-0.5 rounded">Vida = 3 años</span>
+            </h4>
+            <p>• $P$: <strong class="text-rose-600 font-mono">-220,000 MXN</strong></p>
+            <p>• $I$: <strong class="text-emerald-700 font-mono">+115,000 MXN/año</strong></p>
+            <p>• $CAO$: <strong class="text-rose-600 font-mono">-35,000 MXN/año</strong></p>
+            <p>• $VS$: <strong class="text-teal-700 font-mono">+30,000 MXN</strong></p>
+          </div>
+          <div class="bg-white p-3.5 rounded-xl border border-slate-200 space-y-1 text-xs">
+            <h4 class="font-bold text-buap text-sm flex justify-between flex-wrap gap-1">
+              <span>Sistema 2: Turbina Sumergible</span><span class="bg-teal-100 text-teal-800 font-bold px-2 py-0.5 rounded">Vida = 4 años</span>
+            </h4>
+            <p>• $P$: <strong class="text-rose-600 font-mono">-310,000 MXN</strong></p>
+            <p>• $I$: <strong class="text-emerald-700 font-mono">+130,000 MXN/año</strong></p>
+            <p>• $CAO$: <strong class="text-rose-600 font-mono">-22,000 MXN/año</strong></p>
+            <p>• $VS$: <strong class="text-teal-700 font-mono">+45,000 MXN</strong></p>
+          </div>
+        </div>
+      </div>
+
+      <div class="bg-amber-50/70 border border-amber-200 rounded-xl p-4 space-y-2">
+        <div class="flex items-center justify-between flex-wrap gap-2">
+          <span class="text-xs font-bold text-amber-900 flex items-center gap-1.5">
+            <i class="fa-solid fa-compass text-amber-600" aria-hidden="true"></i> Pensamiento Crítico:
+          </span>
+          <button onclick="togglePista('pista2')" aria-label="Mostrar pista del caso 2"
+                  class="text-[11px] font-bold text-teal-700 hover:text-teal-900 flex items-center gap-1">
+            <i class="fa-solid fa-wand-magic-sparkles" aria-hidden="true"></i>
+            <span id="btnPista2">Ver pista</span>
+          </button>
+        </div>
+        <p class="text-xs text-slate-700">¿Cuál es el MCM de 3 y 4 años? ¿Cuántas reinversiones requiere cada sistema?</p>
+        <div id="pista2" class="hidden bg-white p-3.5 rounded-lg border border-amber-300 text-xs text-slate-700 space-y-1.5">
+          <p class="text-teal-800 font-bold">💡 Factores al 12% sobre 12 años:</p>
+          <p>• $\left[1-(1.12)^{-12}\right]/0.12 =$ <span class="font-mono font-bold">6.194374</span></p>
+          <p>• $(1.12)^{-3}=$<span class="font-mono font-bold">0.711780</span> · $(1.12)^{-6}=$<span class="font-mono font-bold">0.506631</span> · $(1.12)^{-9}=$<span class="font-mono font-bold">0.360610</span> · $(1.12)^{-12}=$<span class="font-mono font-bold">0.256675</span></p>
+          <p>• $(1.12)^{-4}=$<span class="font-mono font-bold">0.635518</span> · $(1.12)^{-8}=$<span class="font-mono font-bold">0.403883</span></p>
+        </div>
+      </div>
+
+      <div class="bg-slate-100/80 rounded-xl p-4 border border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div>
+          <label for="c2_mcm" class="block text-xs font-bold text-slate-800 uppercase tracking-wider">1. MCM de 3 y 4 años *</label>
+          <p class="text-[11px] text-slate-500">$3=3^1$; $4=2^2 \rightarrow MCM=12$ años.</p>
+        </div>
+        <div class="w-full sm:w-44">
+          <input type="number" id="c2_mcm" placeholder="Años..." aria-label="MCM caso 2"
+                 class="w-full text-center text-sm font-mono font-bold px-3 py-2 rounded-xl border border-slate-300 bg-white focus:ring-2 focus:ring-amatia-dark">
+        </div>
+      </div>
+
+      <div class="border border-teal-100 bg-teal-50/40 rounded-xl p-4 space-y-4">
+        <h4 class="text-xs font-bold text-amatia-dark uppercase tracking-wider flex items-center gap-2">
+          <i class="fa-solid fa-list-check text-teal-600" aria-hidden="true"></i> 2. Sumatorias VP a 12 años
+        </h4>
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <div>
+            <label for="c2_vpIngS1" class="block text-xs font-semibold text-slate-700 mb-1">Σ VP Ingresos (S1):</label>
+            <select id="c2_vpIngS1" class="w-full text-xs px-3 py-2 rounded-xl border border-slate-300 font-mono bg-white">
+              <option value="">-- Selecciona --</option>
+              <option value="712353">+712,353 MXN</option>
+              <option value="1380000">+1,380,000 MXN</option>
+              <option value="550000">+550,000 MXN</option>
+            </select>
+          </div>
+          <div>
+            <label for="c2_vpCaoS1" class="block text-xs font-semibold text-slate-700 mb-1">Σ VP CAO (S1):</label>
+            <select id="c2_vpCaoS1" class="w-full text-xs px-3 py-2 rounded-xl border border-slate-300 font-mono bg-white">
+              <option value="">-- Selecciona --</option>
+              <option value="-216803">-216,803 MXN</option>
+              <option value="-420000">-420,000 MXN</option>
+              <option value="-185000">-185,000 MXN</option>
+            </select>
+          </div>
+          <div>
+            <label for="c2_vpSalS1" class="block text-xs font-semibold text-slate-700 mb-1">Σ VP Salvamento (S1):</label>
+            <select id="c2_vpSalS1" class="w-full text-xs px-3 py-2 rounded-xl border border-slate-300 font-mono bg-white">
+              <option value="">-- Selecciona --</option>
+              <option value="55071">+55,071 MXN</option>
+              <option value="120000">+120,000 MXN</option>
+              <option value="36000">+36,000 MXN</option>
+            </select>
+          </div>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2 border-t border-teal-200">
+          <div>
+            <label for="c2_vpIngS2" class="block text-xs font-semibold text-slate-700 mb-1">Σ VP Ingresos (S2):</label>
+            <select id="c2_vpIngS2" class="w-full text-xs px-3 py-2 rounded-xl border border-slate-300 font-mono bg-white">
+              <option value="">-- Selecciona --</option>
+              <option value="805269">+805,269 MXN</option>
+              <option value="1560000">+1,560,000 MXN</option>
+              <option value="620000">+620,000 MXN</option>
+            </select>
+          </div>
+          <div>
+            <label for="c2_vpCaoS2" class="block text-xs font-semibold text-slate-700 mb-1">Σ VP CAO (S2):</label>
+            <select id="c2_vpCaoS2" class="w-full text-xs px-3 py-2 rounded-xl border border-slate-300 font-mono bg-white">
+              <option value="">-- Selecciona --</option>
+              <option value="-136276">-136,276 MXN</option>
+              <option value="-264000">-264,000 MXN</option>
+              <option value="-115000">-115,000 MXN</option>
+            </select>
+          </div>
+          <div>
+            <label for="c2_vpSalS2" class="block text-xs font-semibold text-slate-700 mb-1">Σ VP Salvamento (S2):</label>
+            <select id="c2_vpSalS2" class="w-full text-xs px-3 py-2 rounded-xl border border-slate-300 font-mono bg-white">
+              <option value="">-- Selecciona --</option>
+              <option value="58324">+58,324 MXN</option>
+              <option value="135000">+135,000 MXN</option>
+              <option value="42000">+42,000 MXN</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div class="border border-slate-200 bg-slate-50/80 rounded-xl p-4 space-y-3">
+        <h4 class="text-xs font-bold text-slate-800 uppercase tracking-wider flex items-center gap-2">
+          <i class="fa-solid fa-calculator text-amatia-dark" aria-hidden="true"></i> 3. VP Neto Total y Decisión
+        </h4>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label for="c2_vpTotalS1" class="block text-xs font-semibold text-slate-700 mb-1">VP Total Neto S1 *</label>
+            <input type="number" step="1" id="c2_vpTotalS1" placeholder="Ej. 126827"
+                   class="w-full text-xs sm:text-sm px-3 py-2 rounded-xl border border-slate-300 font-mono">
+          </div>
+          <div>
+            <label for="c2_vpTotalS2" class="block text-xs font-semibold text-slate-700 mb-1">VP Total Neto S2 *</label>
+            <input type="number" step="1" id="c2_vpTotalS2" placeholder="Ej. 215108"
+                   class="w-full text-xs sm:text-sm px-3 py-2 rounded-xl border border-slate-300 font-mono">
+          </div>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
+          <div>
+            <label for="c2_factorEstrategico" class="block text-xs font-semibold text-slate-700 mb-1">Pensamiento Crítico *</label>
+            <select id="c2_factorEstrategico" class="w-full text-xs p-2 rounded-xl border border-slate-300 bg-white">
+              <option value="">-- Selecciona --</option>
+              <option value="correcto">S2 genera mayor VP (+215k vs +127k) y menos interrupciones (2 paros vs 3).</option>
+              <option value="incorrecto1">S1 superior por generar más chatarra.</option>
+              <option value="incorrecto2">Sumergibles prohibidas en México.</option>
+            </select>
+          </div>
+          <div>
+            <label for="c2_seleccion" class="block text-xs font-semibold text-slate-700 mb-1">Alternativa Seleccionada *</label>
+            <select id="c2_seleccion" class="w-full text-xs p-2 rounded-xl border border-slate-300 bg-white font-medium">
+              <option value="">-- Elige --</option>
+              <option value="S2">Sistema 2 (Mayor VP: +215,108)</option>
+              <option value="S1">Sistema 1 (VP: +126,827)</option>
+            </select>
+          </div>
+        </div>
+        <div>
+          <label for="c2_justificacion" class="block text-xs font-semibold text-slate-700 mb-1">Dictamen Técnico *</label>
+          <textarea id="c2_justificacion" rows="2" placeholder="Sustenta por qué S2 maximiza el VP a 12 años pese a su mayor inversión inicial..." class="w-full text-xs p-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-amatia-dark"></textarea>
+        </div>
+      </div>
+
+      <div class="flex justify-end">
+        <button onclick="validarCaso2()" class="bg-amatia-dark hover:bg-amatia-primary text-white font-bold text-xs sm:text-sm px-5 py-2.5 rounded-xl shadow-md transition-all flex items-center gap-2 active:scale-95">
+          <i class="fa-solid fa-check-double" aria-hidden="true"></i> Calificar Caso 2
+        </button>
+      </div>
+    </section>
+
+    <!-- ======================= CASO 3 ======================= -->
+    <section class="bg-white rounded-2xl p-6 shadow-sm border border-slate-200 space-y-5 card-hover-effect" aria-labelledby="c3-titulo">
+      <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center pb-4 border-b border-slate-100 gap-3">
+        <div>
+          <div class="flex items-center gap-2 flex-wrap">
+            <span class="bg-amber-600 text-white font-extrabold text-xs px-2.5 py-1 rounded-md">CASO 3</span>
+            <span class="text-xs font-semibold text-slate-500">Parque FINSA • TMAR = 15%</span>
+          </div>
+          <h3 id="c3-titulo" class="text-lg font-bold text-slate-900 mt-1">Generación y Eficiencia (4 vs. 6 años)</h3>
+        </div>
+        <div id="statusC3" class="text-xs font-bold px-3 py-1.5 rounded-full bg-slate-100 text-slate-600 flex items-center gap-1.5 transition-all">
+          <i class="fa-solid fa-clock" aria-hidden="true"></i> Pendiente
+        </div>
+      </div>
+
+      <div class="bg-slate-50 rounded-xl p-4 border border-slate-200 text-sm text-slate-700 leading-relaxed">
+        <p class="font-medium text-slate-800 mb-2"><i class="fa-solid fa-solar-panel text-amber-600 mr-1" aria-hidden="true"></i> Contexto energético:</p>
+        <p>Nave de manufactura avanzada evalúa dos tecnologías a TMAR <strong>15% ($i=0.15$)</strong>:</p>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-3">
+          <div class="bg-white p-3.5 rounded-xl border border-slate-200 space-y-1 text-xs">
+            <h4 class="font-bold text-buap text-sm flex justify-between flex-wrap gap-1">
+              <span>Solar TS (Fotovoltaico)</span><span class="bg-amber-100 text-amber-800 font-bold px-2 py-0.5 rounded">Vida = 4 años</span>
+            </h4>
+            <p>• $P$: <strong class="text-rose-600 font-mono">-550,000 MXN</strong></p>
+            <p>• $I$: <strong class="text-emerald-700 font-mono">+260,000 MXN/año</strong></p>
+            <p>• $CAO$: <strong class="text-rose-600 font-mono">-35,000 MXN/año</strong></p>
+            <p>• $VS$: <strong class="text-teal-700 font-mono">+90,000 MXN</strong></p>
+          </div>
+          <div class="bg-white p-3.5 rounded-xl border border-slate-200 space-y-1 text-xs">
+            <h4 class="font-bold text-buap text-sm flex justify-between flex-wrap gap-1">
+              <span>Turbina TG (Cogeneración)</span><span class="bg-teal-100 text-teal-800 font-bold px-2 py-0.5 rounded">Vida = 6 años</span>
+            </h4>
+            <p>• $P$: <strong class="text-rose-600 font-mono">-850,000 MXN</strong></p>
+            <p>• $I$: <strong class="text-emerald-700 font-mono">+360,000 MXN/año</strong></p>
+            <p>• $CAO$: <strong class="text-rose-600 font-mono">-60,000 MXN/año</strong></p>
+            <p>• $VS$: <strong class="text-teal-700 font-mono">+160,000 MXN</strong></p>
+          </div>
+        </div>
+      </div>
+
+      <div class="bg-amber-50/70 border border-amber-200 rounded-xl p-4 space-y-2">
+        <div class="flex items-center justify-between flex-wrap gap-2">
+          <span class="text-xs font-bold text-amber-900 flex items-center gap-1.5">
+            <i class="fa-solid fa-compass text-amber-600" aria-hidden="true"></i> Pensamiento Crítico:
+          </span>
+          <button onclick="togglePista('pista3')" aria-label="Mostrar pista del caso 3"
+                  class="text-[11px] font-bold text-teal-700 hover:text-teal-900 flex items-center gap-1">
+            <i class="fa-solid fa-wand-magic-sparkles" aria-hidden="true"></i>
+            <span id="btnPista3">Ver pista</span>
+          </button>
+        </div>
+        <p class="text-xs text-slate-700">
+          ¿El mayor VP de una alternativa justifica asumir el riesgo de volatilidad de su insumo principal en un horizonte de 12 años? Argumenta considerando la naturaleza de cada tecnología.
+        </p>
+        <div id="pista3" class="hidden bg-white p-3.5 rounded-lg border border-amber-300 text-xs text-slate-700 space-y-1.5">
+          <p class="text-teal-800 font-bold">💡 Factores al 15% sobre 12 años:</p>
+          <p>• $\left[1-(1.15)^{-12}\right]/0.15 =$ <span class="font-mono font-bold">5.420619</span></p>
+          <p>• $(1.15)^{-4}=$<span class="font-mono font-bold">0.571753</span> · $(1.15)^{-6}=$<span class="font-mono font-bold">0.432328</span> · $(1.15)^{-8}=$<span class="font-mono font-bold">0.326902</span> · $(1.15)^{-12}=$<span class="font-mono font-bold">0.186907</span></p>
+        </div>
+      </div>
+
+      <div class="bg-slate-100/80 rounded-xl p-4 border border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div>
+          <label for="c3_mcm" class="block text-xs font-bold text-slate-800 uppercase tracking-wider">1. MCM de 4 y 6 años *</label>
+          <p class="text-[11px] text-slate-500">$4=2^2$; $6=2^1\times3^1 \rightarrow MCM=12$ años.</p>
+        </div>
+        <div class="w-full sm:w-44">
+          <input type="number" id="c3_mcm" placeholder="Años..." aria-label="MCM caso 3"
+                 class="w-full text-center text-sm font-mono font-bold px-3 py-2 rounded-xl border border-slate-300 bg-white focus:ring-2 focus:ring-amber-600">
+        </div>
+      </div>
+
+      <div class="border border-amber-200 bg-amber-50/40 rounded-xl p-4 space-y-4">
+        <h4 class="text-xs font-bold text-amber-950 uppercase tracking-wider flex items-center gap-2">
+          <i class="fa-solid fa-list-check text-amber-600" aria-hidden="true"></i> 2. Sumatorias VP a 12 años
+        </h4>
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <div>
+            <label for="c3_vpIngTS" class="block text-xs font-semibold text-slate-700 mb-1">Σ VP Ingresos (TS):</label>
+            <select id="c3_vpIngTS" class="w-full text-xs px-3 py-2 rounded-xl border border-slate-300 font-mono bg-white">
+              <option value="">-- Selecciona --</option>
+              <option value="1409361">+1,409,361 MXN</option>
+              <option value="3120000">+3,120,000 MXN</option>
+              <option value="1150000">+1,150,000 MXN</option>
+            </select>
+          </div>
+          <div>
+            <label for="c3_vpCaoTS" class="block text-xs font-semibold text-slate-700 mb-1">Σ VP CAO (TS):</label>
+            <select id="c3_vpCaoTS" class="w-full text-xs px-3 py-2 rounded-xl border border-slate-300 font-mono bg-white">
+              <option value="">-- Selecciona --</option>
+              <option value="-189722">-189,722 MXN</option>
+              <option value="-420000">-420,000 MXN</option>
+              <option value="-165000">-165,000 MXN</option>
+            </select>
+          </div>
+          <div>
+            <label for="c3_vpSalTS" class="block text-xs font-semibold text-slate-700 mb-1">Σ VP Salvamento (TS):</label>
+            <select id="c3_vpSalTS" class="w-full text-xs px-3 py-2 rounded-xl border border-slate-300 font-mono bg-white">
+              <option value="">-- Selecciona --</option>
+              <option value="97698">+97,698 MXN</option>
+              <option value="270000">+270,000 MXN</option>
+              <option value="65000">+65,000 MXN</option>
+            </select>
+          </div>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2 border-t border-amber-200">
+          <div>
+            <label for="c3_vpIngTG" class="block text-xs font-semibold text-slate-700 mb-1">Σ VP Ingresos (TG):</label>
+            <select id="c3_vpIngTG" class="w-full text-xs px-3 py-2 rounded-xl border border-slate-300 font-mono bg-white">
+              <option value="">-- Selecciona --</option>
+              <option value="1951423">+1,951,423 MXN</option>
+              <option value="4320000">+4,320,000 MXN</option>
+              <option value="1600000">+1,600,000 MXN</option>
+            </select>
+          </div>
+          <div>
+            <label for="c3_vpCaoTG" class="block text-xs font-semibold text-slate-700 mb-1">Σ VP CAO (TG):</label>
+            <select id="c3_vpCaoTG" class="w-full text-xs px-3 py-2 rounded-xl border border-slate-300 font-mono bg-white">
+              <option value="">-- Selecciona --</option>
+              <option value="-325237">-325,237 MXN</option>
+              <option value="-720000">-720,000 MXN</option>
+              <option value="-260000">-260,000 MXN</option>
+            </select>
+          </div>
+          <div>
+            <label for="c3_vpSalTG" class="block text-xs font-semibold text-slate-700 mb-1">Σ VP Salvamento (TG):</label>
+            <select id="c3_vpSalTG" class="w-full text-xs px-3 py-2 rounded-xl border border-slate-300 font-mono bg-white">
+              <option value="">-- Selecciona --</option>
+              <option value="99078">+99,078 MXN</option>
+              <option value="320000">+320,000 MXN</option>
+              <option value="75000">+75,000 MXN</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div class="border border-slate-200 bg-slate-50/80 rounded-xl p-4 space-y-3">
+        <h4 class="text-xs font-bold text-slate-800 uppercase tracking-wider flex items-center gap-2">
+          <i class="fa-solid fa-calculator text-amber-700" aria-hidden="true"></i> 3. VP Neto Total y Decisión
+        </h4>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label for="c3_vpTotalTS" class="block text-xs font-semibold text-slate-700 mb-1">VP Total Neto TS *</label>
+            <input type="number" step="1" id="c3_vpTotalTS" placeholder="Ej. 273077"
+                   class="w-full text-xs sm:text-sm px-3 py-2 rounded-xl border border-slate-300 font-mono">
+          </div>
+          <div>
+            <label for="c3_vpTotalTG" class="block text-xs font-semibold text-slate-700 mb-1">VP Total Neto TG *</label>
+            <input type="number" step="1" id="c3_vpTotalTG" placeholder="Ej. 507785"
+                   class="w-full text-xs sm:text-sm px-3 py-2 rounded-xl border border-slate-300 font-mono">
+          </div>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
+          <div>
+            <label for="c3_factorEstrategico" class="block text-xs font-semibold text-slate-700 mb-1">Rentabilidad vs Riesgo *</label>
+            <select id="c3_factorEstrategico" class="w-full text-xs p-2 rounded-xl border border-slate-300 bg-white">
+              <option value="">-- Pondera --</option>
+              <option value="correcto">Mayor VP compensa exposición a volatilidad del insumo; alternativa baja volatilidad es defendible.</option>
+              <option value="incorrecto1">El nombre más moderno decide.</option>
+              <option value="incorrecto2">Sin permisos de red.</option>
+            </select>
+          </div>
+          <div>
+            <label for="c3_seleccion" class="block text-xs font-semibold text-slate-700 mb-1">Alternativa Recomendada *</label>
+            <select id="c3_seleccion" class="w-full text-xs p-2 rounded-xl border border-slate-300 bg-white font-medium">
+              <option value="">-- Elige --</option>
+              <option value="TG">TG (Óptimo económico: +507,785)</option>
+              <option value="TS">TS (Menor riesgo: +273,077)</option>
+            </select>
+          </div>
+        </div>
+        <div>
+          <label for="c3_justificacion" class="block text-xs font-semibold text-slate-700 mb-1">Dictamen Técnico *</label>
+          <textarea id="c3_justificacion" rows="2" placeholder="Integra rentabilidad a 12 años, reinversiones y gestión de riesgo..." class="w-full text-xs p-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-amber-600"></textarea>
+        </div>
+      </div>
+
+      <div class="flex justify-end">
+        <button onclick="validarCaso3()" class="bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs sm:text-sm px-5 py-2.5 rounded-xl shadow-md transition-all flex items-center gap-2 active:scale-95">
+          <i class="fa-solid fa-check-double" aria-hidden="true"></i> Calificar Caso 3
+        </button>
+      </div>
+    </section>
+
+    <!-- ======================= CASO 4: INFLACIÓN (VP exactos) ======================= -->
+    <section class="bg-white rounded-2xl p-6 shadow-sm border border-slate-200 space-y-5 card-hover-effect" aria-labelledby="c4-titulo">
+      <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center pb-4 border-b border-slate-100 gap-3">
+        <div>
+          <div class="flex items-center gap-2 flex-wrap">
+            <span class="bg-fuchsia-700 text-white font-extrabold text-xs px-2.5 py-1 rounded-md">CASO 4</span>
+            <span class="text-xs font-semibold text-slate-500">TMAR nominal 18% · inflación 6% → real ≈ 11.32%</span>
+          </div>
+          <h3 id="c4-titulo" class="text-lg font-bold text-slate-900 mt-1">Planta de Envasado con Inflación (5 vs. 7 años)</h3>
+        </div>
+        <div id="statusC4" class="text-xs font-bold px-3 py-1.5 rounded-full bg-slate-100 text-slate-600 flex items-center gap-1.5 transition-all">
+          <i class="fa-solid fa-clock" aria-hidden="true"></i> Pendiente
+        </div>
+      </div>
+
+      <div class="bg-slate-50 rounded-xl p-4 border border-slate-200 text-sm text-slate-700 leading-relaxed">
+        <p class="font-medium text-slate-800 mb-2"><i class="fa-solid fa-industry text-fuchsia-700 mr-1" aria-hidden="true"></i> Contexto (avanzado):</p>
+        <p>
+          TMAR nominal <strong>18%</strong> e inflación <strong>6%</strong>. TMAR real: $i_r = 1.18/1.06 - 1 \approx \mathbf{11.32\%}$.
+          Flujos en pesos nominales. MCM(5,7) = <strong>35 años</strong> (L1: 7 ciclos; L2: 5 ciclos).
+        </p>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-3">
+          <div class="bg-white p-3.5 rounded-xl border border-slate-200 space-y-1 text-xs">
+            <h4 class="font-bold text-buap text-sm flex justify-between flex-wrap gap-1">
+              <span>Línea 1: Envasado Neumático</span><span class="bg-amber-100 text-amber-800 font-bold px-2 py-0.5 rounded">Vida = 5 años</span>
+            </h4>
+            <p>• $P$: <strong class="text-rose-600 font-mono">-1,000,000 MXN</strong></p>
+            <p>• $I$ nominal: <strong class="text-emerald-700 font-mono">+520,000 MXN/año</strong></p>
+            <p>• $CAO$ nominal: <strong class="text-rose-600 font-mono">-180,000 MXN/año</strong></p>
+            <p>• $I - CAO$: <strong class="text-emerald-700 font-mono">+340,000 MXN/año</strong></p>
+            <p>• $VS$: <strong class="text-teal-700 font-mono">+120,000 MXN</strong></p>
+          </div>
+          <div class="bg-white p-3.5 rounded-xl border border-slate-200 space-y-1 text-xs">
+            <h4 class="font-bold text-buap text-sm flex justify-between flex-wrap gap-1">
+              <span>Línea 2: Envasado Rotativo</span><span class="bg-teal-100 text-teal-800 font-bold px-2 py-0.5 rounded">Vida = 7 años</span>
+            </h4>
+            <p>• $P$: <strong class="text-rose-600 font-mono">-1,400,000 MXN</strong></p>
+            <p>• $I$ nominal: <strong class="text-emerald-700 font-mono">+610,000 MXN/año</strong></p>
+            <p>• $CAO$ nominal: <strong class="text-rose-600 font-mono">-140,000 MXN/año</strong></p>
+            <p>• $I - CAO$: <strong class="text-emerald-700 font-mono">+470,000 MXN/año</strong></p>
+            <p>• $VS$: <strong class="text-teal-700 font-mono">+200,000 MXN</strong></p>
+          </div>
+        </div>
+      </div>
+
+      <div class="bg-amber-50/70 border border-amber-200 rounded-xl p-4 space-y-2">
+        <div class="flex items-center justify-between flex-wrap gap-2">
+          <span class="text-xs font-bold text-amber-900 flex items-center gap-1.5">
+            <i class="fa-solid fa-compass text-amber-600" aria-hidden="true"></i> Pensamiento Crítico:
+          </span>
+          <button onclick="togglePista('pista4')" aria-label="Mostrar pista del caso 4"
+                  class="text-[11px] font-bold text-teal-700 hover:text-teal-900 flex items-center gap-1">
+            <i class="fa-solid fa-wand-magic-sparkles" aria-hidden="true"></i>
+            <span id="btnPista4">Ver pista</span>
+          </button>
+        </div>
+        <p class="text-xs text-slate-700">
+          ¿Por qué con flujos nominales debes descontar a la TMAR nominal (18%)? ¿Qué distorsión se produce si mezclas flujos nominales con TMAR real?
+        </p>
+        <div id="pista4" class="hidden bg-white p-3.5 rounded-lg border border-amber-300 text-xs text-slate-700 space-y-1.5">
+          <p class="text-teal-800 font-bold">💡 Factores al 18% nominal:</p>
+          <p>• Serie uniforme 35 a: $\left[1-(1.18)^{-35}\right]/0.18 =$ <span class="font-mono font-bold">5.544144</span></p>
+          <p>• $(1.18)^{-5}=$<span class="font-mono font-bold">0.437109</span> · $(1.18)^{-7}=$<span class="font-mono font-bold">0.313914</span></p>
+          <p>• Suma reinv L1 (5a × 6): <span class="font-mono font-bold">0.830949</span> · Suma reinv L2 (7a × 4): <span class="font-mono font-bold">0.481759</span></p>
+          <p>• Suma VS L1 (7 VS): <span class="font-mono font-bold">1.051553</span> · Suma VS L2 (5 VS): <span class="font-mono font-bold">0.606100</span></p>
+          <p class="text-slate-600">Regla: flujos nominales → TMAR nominal. Flujos reales → TMAR real. Nunca mezclar.</p>
+        </div>
+      </div>
+
+      <div class="bg-slate-100/80 rounded-xl p-4 border border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div>
+          <label for="c4_mcm" class="block text-xs font-bold text-slate-800 uppercase tracking-wider">1. MCM de 5 y 7 años *</label>
+          <p class="text-[11px] text-slate-500">$5=5^1$; $7=7^1 \rightarrow MCM=35$ años.</p>
+        </div>
+        <div class="w-full sm:w-44">
+          <input type="number" id="c4_mcm" placeholder="Años..." aria-label="MCM caso 4"
+                 class="w-full text-center text-sm font-mono font-bold px-3 py-2 rounded-xl border border-slate-300 bg-white focus:ring-2 focus:ring-fuchsia-600">
+        </div>
+      </div>
+
+      <div class="border border-fuchsia-200 bg-fuchsia-50/40 rounded-xl p-4 space-y-4">
+        <h4 class="text-xs font-bold text-fuchsia-900 uppercase tracking-wider flex items-center gap-2">
+          <i class="fa-solid fa-list-check text-fuchsia-600" aria-hidden="true"></i> 2. VP Neto Total a 35 años (TMAR nominal 18%)
+        </h4>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label for="c4_vpTotalL1" class="block text-xs font-semibold text-slate-700 mb-1">VP Total Neto Línea 1 *</label>
+            <input type="number" step="1" id="c4_vpTotalL1" placeholder="Ej. 180246"
+                   class="w-full text-xs sm:text-sm px-3 py-2 rounded-xl border border-slate-300 font-mono">
+            <span class="text-[10px] text-slate-500 block mt-0.5">$-P_0 - P \cdot \Sigma(1.18)^{-5k} + 340{,}000 \cdot 5.544144 + 120{,}000 \cdot 1.051553$</span>
+          </div>
+          <div>
+            <label for="c4_vpTotalL2" class="block text-xs font-semibold text-slate-700 mb-1">VP Total Neto Línea 2 *</label>
+            <input type="number" step="1" id="c4_vpTotalL2" placeholder="Ej. 652505"
+                   class="w-full text-xs sm:text-sm px-3 py-2 rounded-xl border border-slate-300 font-mono">
+            <span class="text-[10px] text-slate-500 block mt-0.5">$-P_0 - P \cdot \Sigma(1.18)^{-7k} + 470{,}000 \cdot 5.544144 + 200{,}000 \cdot 0.606100$</span>
+          </div>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
+          <div>
+            <label for="c4_factorEstrategico" class="block text-xs font-semibold text-slate-700 mb-1">Coherencia Monetaria *</label>
+            <select id="c4_factorEstrategico" class="w-full text-xs p-2 rounded-xl border border-slate-300 bg-white">
+              <option value="">-- Selecciona --</option>
+              <option value="correcto">Flujos nominales ↔ TMAR nominal (18%); mezclar con la real subestimaría el VP.</option>
+              <option value="incorrecto1">Siempre descontar a la TMAR real sin importar la unidad monetaria.</option>
+              <option value="incorrecto2">Sumar inflación y TMAR como si fueran aditivas.</option>
+            </select>
+          </div>
+          <div>
+            <label for="c4_seleccion" class="block text-xs font-semibold text-slate-700 mb-1">Alternativa Seleccionada *</label>
+            <select id="c4_seleccion" class="w-full text-xs p-2 rounded-xl border border-slate-300 bg-white font-medium">
+              <option value="">-- Elige --</option>
+              <option value="L2">Línea 2 (Rotativo, mayor VP: +652,505)</option>
+              <option value="L1">Línea 1 (Neumático, VP: +180,246)</option>
+            </select>
+          </div>
+        </div>
+        <div>
+          <label for="c4_justificacion" class="block text-xs font-semibold text-slate-700 mb-1">Dictamen Técnico *</label>
+          <textarea id="c4_justificacion" rows="2" placeholder="Explica la coherencia nominal/nominal y por qué L2 domina el horizonte MCM=35..." class="w-full text-xs p-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-fuchsia-600"></textarea>
+        </div>
+      </div>
+
+      <div class="flex justify-end">
+        <button onclick="validarCaso4()" class="bg-fuchsia-700 hover:bg-fuchsia-800 text-white font-bold text-xs sm:text-sm px-5 py-2.5 rounded-xl shadow-md transition-all flex items-center gap-2 active:scale-95">
+          <i class="fa-solid fa-check-double" aria-hidden="true"></i> Calificar Caso 4
+        </button>
+      </div>
+    </section>
+
+    <!-- Exportación PDF -->
+    <section class="bg-gradient-to-r from-buap-dark to-slate-900 rounded-2xl p-6 shadow-xl text-white flex flex-col md:flex-row items-center justify-between gap-6 no-print">
+      <div class="space-y-1">
+        <span class="text-xs uppercase tracking-widest text-teal-300 font-extrabold flex items-center gap-2">
+          <i class="fa-solid fa-file-signature" aria-hidden="true"></i> Acreditación Académica
+        </span>
+        <h3 class="text-xl font-bold">Dictamen Académico PDF</h3>
+        <p class="text-xs sm:text-sm text-slate-300 max-w-2xl leading-relaxed">
+          Descarga el reporte institucional con los 4 casos analizados.
+        </p>
+      </div>
+      <div class="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
+        <button onclick="previsualizarDictamen()" class="px-5 py-3 rounded-xl bg-white/10 hover:bg-white/20 border border-white/20 text-white font-semibold text-xs sm:text-sm transition-all flex items-center justify-center gap-2">
+          <i class="fa-solid fa-eye" aria-hidden="true"></i> Previsualizar
+        </button>
+        <button onclick="descargarReportePDF()" class="px-6 py-3 rounded-xl bg-amatia-accent hover:bg-teal-400 text-slate-900 font-extrabold text-xs sm:text-sm transition-all shadow-lg flex items-center justify-center gap-2 active:scale-95">
+          <i class="fa-solid fa-file-pdf text-base" aria-hidden="true"></i> Descargar PDF
+        </button>
+      </div>
+    </section>
+  </main>
+
+  <footer class="bg-white border-t border-slate-200 mt-12 py-6 text-center text-xs text-slate-500 space-y-1 no-print">
+    <p class="font-semibold text-buap">Benemérita Universidad Autónoma de Puebla • Facultad de Ingeniería</p>
+    <p>Cátedra: <strong>Mtro. José Alfredo Ávila de la Rosa</strong></p>
+    <p class="text-[11px] text-teal-700 font-medium">AmatIA LabX • Métodos Analíticos de Ingeniería Económica</p>
+  </footer>
+
+  <!-- MODAL DOCENTE -->
+  <div id="modalCatedraDocente" role="dialog" aria-modal="true" aria-labelledby="tituloCatedra"
+       class="hidden fixed inset-0 z-50 bg-slate-950/85 backdrop-blur-md flex flex-col transition-all duration-300 overflow-hidden">
+
+    <div class="bg-gradient-to-r from-buap-dark via-slate-900 to-buap px-5 py-3 border-b border-teal-500/40 flex items-center justify-between shadow-2xl flex-shrink-0">
+      <div class="flex items-center space-x-3">
+        <div class="w-10 h-10 rounded-xl bg-amber-400/20 border border-amber-400/50 flex items-center justify-center text-amber-300 text-xl font-bold shadow-inner" aria-hidden="true">
+          <i class="fa-solid fa-chalkboard-user"></i>
+        </div>
+        <div>
+          <div class="flex items-center gap-2 flex-wrap">
+            <span class="bg-amber-400 text-slate-950 text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded">Solucionario</span>
+            <span class="text-xs text-teal-300 font-mono font-semibold">BUAP • Mtro. José Alfredo Ávila de la Rosa</span>
+          </div>
+          <h2 id="tituloCatedra" class="text-sm sm:text-base font-extrabold text-white tracking-tight">Memoria Analítica Paso a Paso</h2>
+        </div>
+      </div>
+      <div class="flex items-center space-x-2.5">
+        <button id="btnAutoDemo" onclick="demoLlenarValores()" class="hidden bg-teal-500/20 hover:bg-teal-500/30 text-teal-200 border border-teal-400/40 text-xs px-3 py-1.5 rounded-lg font-bold flex items-center gap-1.5 transition-all">
+          <i class="fa-solid fa-bolt-lightning text-teal-300" aria-hidden="true"></i>
+          <span class="hidden sm:inline">Cargar Demo</span>
+        </button>
+        <button onclick="cerrarSolucionarioCatedra()" aria-label="Cerrar solucionario"
+                class="bg-white/10 hover:bg-rose-600 text-white w-9 h-9 rounded-xl flex items-center justify-center transition-all border border-white/20 active:scale-95">
+          <i class="fa-solid fa-xmark text-lg" aria-hidden="true"></i>
+        </button>
+      </div>
+    </div>
+
+    <div id="authCatedraView" class="flex-grow flex items-center justify-center p-6 overflow-y-auto">
+      <div class="bg-white rounded-3xl p-8 max-w-md w-full shadow-2xl border border-slate-200 text-center space-y-5">
+        <div class="w-16 h-16 mx-auto rounded-2xl bg-amber-100 border border-amber-300 flex items-center justify-center text-amber-600 text-2xl shadow-inner anim-float" aria-hidden="true">
+          <i class="fa-solid fa-lock"></i>
+        </div>
+        <div>
+          <span class="text-[11px] font-mono font-bold text-buap uppercase tracking-widest bg-buap/10 px-2.5 py-1 rounded-md">Acceso Docente</span>
+          <h3 class="text-lg font-black text-slate-900 mt-2">Bóveda de Soluciones</h3>
+          <p class="text-xs text-slate-600 mt-1 leading-relaxed">
+            Protección <strong>simbólica</strong> en cliente (contenido estático). No apta para datos sensibles.
+          </p>
+        </div>
+        <div class="space-y-3">
+          <input type="password" id="inputPassCatedra" placeholder="Contraseña..." aria-label="Contraseña docente"
+                 onkeyup="if(event.key==='Enter') verificarPasswordCatedra()"
+                 class="w-full text-center text-sm font-mono font-bold px-4 py-3 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-buap tracking-wider">
+          <button onclick="verificarPasswordCatedra()" class="w-full bg-buap hover:bg-buap-dark text-white font-bold text-sm py-3 rounded-xl transition-all shadow-md active:scale-95 flex items-center justify-center gap-2">
+            <i class="fa-solid fa-key text-amber-400" aria-hidden="true"></i> Habilitar Solucionario
+          </button>
+          <p id="msgErrorCatedra" class="text-xs font-bold text-rose-600 hidden flex items-center justify-center gap-1" role="alert">
+            <i class="fa-solid fa-circle-exclamation" aria-hidden="true"></i> Contraseña incorrecta.
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <div id="pizarraCatedraView" class="hidden flex-grow flex flex-col md:flex-row h-full overflow-hidden">
+      <aside class="w-full md:w-72 bg-slate-900 border-r border-slate-800 p-4 flex flex-row md:flex-col gap-2 flex-shrink-0 overflow-x-auto md:overflow-y-auto">
+        <div class="hidden md:block pb-3 mb-2 border-b border-slate-800">
+          <span class="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Unidades</span>
+          <p class="text-xs text-slate-300 font-semibold mt-0.5">Memoria Paso a Paso</p>
+        </div>
+        <button onclick="cambiarPestanaDocente('tab-caso1')" id="nav-caso1" class="tab-docente-btn w-full text-left p-3 rounded-xl font-bold text-xs flex items-center justify-between transition-all bg-buap text-white shadow-md border border-teal-500/40">
+          <span class="flex items-center gap-2"><i class="fa-solid fa-truck text-amber-400" aria-hidden="true"></i><span>Caso 1</span></span>
+          <span class="text-[10px] font-mono opacity-80">MCM=6</span>
+        </button>
+        <button onclick="cambiarPestanaDocente('tab-caso2')" id="nav-caso2" class="tab-docente-btn w-full text-left p-3 rounded-xl font-medium text-xs flex items-center justify-between transition-all text-slate-400 hover:text-white hover:bg-slate-800 border border-transparent">
+          <span class="flex items-center gap-2"><i class="fa-solid fa-faucet-drip text-teal-400" aria-hidden="true"></i><span>Caso 2</span></span>
+          <span class="text-[10px] font-mono opacity-80">MCM=12</span>
+        </button>
+        <button onclick="cambiarPestanaDocente('tab-caso3')" id="nav-caso3" class="tab-docente-btn w-full text-left p-3 rounded-xl font-medium text-xs flex items-center justify-between transition-all text-slate-400 hover:text-white hover:bg-slate-800 border border-transparent">
+          <span class="flex items-center gap-2"><i class="fa-solid fa-solar-panel text-cyan-400" aria-hidden="true"></i><span>Caso 3</span></span>
+          <span class="text-[10px] font-mono opacity-80">MCM=12</span>
+        </button>
+        <button onclick="cambiarPestanaDocente('tab-caso4')" id="nav-caso4" class="tab-docente-btn w-full text-left p-3 rounded-xl font-medium text-xs flex items-center justify-between transition-all text-slate-400 hover:text-white hover:bg-slate-800 border border-transparent">
+          <span class="flex items-center gap-2"><i class="fa-solid fa-industry text-fuchsia-400" aria-hidden="true"></i><span>Caso 4</span></span>
+          <span class="text-[10px] font-mono opacity-80">MCM=35</span>
+        </button>
+      </aside>
+
+      <main class="flex-grow p-4 sm:p-6 overflow-y-auto bg-slate-900 text-slate-100 custom-scroll space-y-6">
+
+        <!-- CASO 1 docente -->
+        <div id="tab-caso1" class="tab-docente-content space-y-5">
+          <div class="bg-slate-800/80 p-5 rounded-2xl border border-slate-700/80">
+            <span class="text-[11px] font-mono uppercase tracking-widest text-teal-400 font-bold bg-teal-950/60 border border-teal-800 px-2.5 py-1 rounded-md">Caso 1 · Logística</span>
+            <h3 class="text-lg sm:text-2xl font-black text-white mt-1.5">MCM = 6 años · i = 10%</h3>
+            <p class="text-xs text-slate-400 mt-1">A: 2 ciclos ($t=3$). B: 1 ciclo. Ganador: <strong class="text-emerald-400">Opción B (+348,473)</strong>.</p>
+          </div>
+          <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 text-xs">
+            <div class="bg-slate-800/90 rounded-2xl p-4 border border-slate-700 space-y-2 font-mono">
+              <h4 class="font-bold text-amber-300">Opción A — 2 ciclos</h4>
+              <p>$\Sigma VP_{Ing} = 240{,}000 \times 4.355261 = +1{,}045{,}263$</p>
+              <p>$\Sigma VP_{CAO} = -65{,}000 \times 4.355261 = -283{,}092$</p>
+              <p>$VP_{P0} = -380{,}000$</p>
+              <p>$VP_{P3} = -380{,}000 \times 0.751315 = -285{,}500$</p>
+              <p>$\Sigma VP_{VS} = 60{,}000 \times (0.751315+0.564474) = +78{,}947$</p>
+              <p class="text-emerald-300 font-bold pt-2 border-t border-slate-700">VP Total A = +270,118</p>
+            </div>
+            <div class="bg-slate-800/90 rounded-2xl p-4 border border-slate-700 space-y-2 font-mono">
+              <h4 class="font-bold text-emerald-300">Opción B — 1 ciclo</h4>
+              <p>$\Sigma VP_{Ing} = 260{,}000 \times 4.355261 = +1{,}132{,}368$</p>
+              <p>$\Sigma VP_{CAO} = -45{,}000 \times 4.355261 = -195{,}987$</p>
+              <p>$VP_P = -650{,}000$</p>
+              <p>$VP_{VS} = 110{,}000 \times 0.564474 = +62{,}092$</p>
+              <p class="text-emerald-300 font-bold pt-2 border-t border-slate-700">VP Total B = +348,473</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- CASO 2 docente -->
+        <div id="tab-caso2" class="tab-docente-content hidden space-y-5">
+          <div class="bg-slate-800/80 p-5 rounded-2xl border border-slate-700/80">
+            <span class="text-[11px] font-mono uppercase tracking-widest text-teal-400 font-bold bg-teal-950/60 border border-teal-800 px-2.5 py-1 rounded-md">Caso 2 · Bombeo</span>
+            <h3 class="text-lg sm:text-2xl font-black text-white mt-1.5">MCM = 12 años · i = 12%</h3>
+            <p class="text-xs text-slate-400 mt-1">S1: 4 ciclos ($t=3,6,9$). S2: 3 ciclos ($t=4,8$). Ganador: <strong class="text-emerald-400">S2 (+215,108)</strong>.</p>
+          </div>
+          <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 text-xs">
+            <div class="bg-slate-800/90 rounded-2xl p-4 border border-slate-700 space-y-2 font-mono">
+              <h4 class="font-bold text-amber-300">S1 — 4 ciclos</h4>
+              <p>$\Sigma VP_{Ing} = 115{,}000 \times 6.194374 = +712{,}353$</p>
+              <p>$\Sigma VP_{CAO} = -35{,}000 \times 6.194374 = -216{,}803$</p>
+              <p>$VP_{Reinv} = -220{,}000 \times 1.579021 = -347{,}385$</p>
+              <p>$\Sigma VP_{VS} = 30{,}000 \times 1.835696 = +55{,}071$</p>
+              <p class="text-emerald-300 font-bold pt-2 border-t border-slate-700">VP Total S1 = +126,827</p>
+            </div>
+            <div class="bg-slate-800/90 rounded-2xl p-4 border border-slate-700 space-y-2 font-mono">
+              <h4 class="font-bold text-emerald-300">S2 — 3 ciclos</h4>
+              <p>$\Sigma VP_{Ing} = 130{,}000 \times 6.194374 = +805{,}269$</p>
+              <p>$\Sigma VP_{CAO} = -22{,}000 \times 6.194374 = -136{,}276$</p>
+              <p>$VP_{Reinv} = -310{,}000 \times 1.039401 = -322{,}214$</p>
+              <p>$\Sigma VP_{VS} = 45{,}000 \times 1.296076 = +58{,}324$</p>
+              <p class="text-emerald-300 font-bold pt-2 border-t border-slate-700">VP Total S2 = +215,108</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- CASO 3 docente -->
+        <div id="tab-caso3" class="tab-docente-content hidden space-y-5">
+          <div class="bg-slate-800/80 p-5 rounded-2xl border border-slate-700/80">
+            <span class="text-[11px] font-mono uppercase tracking-widest text-amber-400 font-bold bg-amber-950/60 border border-amber-800 px-2.5 py-1 rounded-md">Caso 3 · Energía</span>
+            <h3 class="text-lg sm:text-2xl font-black text-white mt-1.5">MCM = 12 años · i = 15%</h3>
+            <p class="text-xs text-slate-400 mt-1">TS: 3 ciclos ($t=4,8$). TG: 2 ciclos ($t=6$). Ganador económico: <strong class="text-emerald-400">TG (+507,785)</strong>.</p>
+          </div>
+          <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 text-xs">
+            <div class="bg-slate-800/90 rounded-2xl p-4 border border-slate-700 space-y-2 font-mono">
+              <h4 class="font-bold text-amber-300">TS — 3 ciclos</h4>
+              <p>$\Sigma VP_{Ing} = 260{,}000 \times 5.420619 = +1{,}409{,}361$</p>
+              <p>$\Sigma VP_{CAO} = -35{,}000 \times 5.420619 = -189{,}722$</p>
+              <p>$VP_{Reinv} = -550{,}000 \times 0.898655 = -494{,}260$</p>
+              <p>$\Sigma VP_{VS} = 90{,}000 \times 1.085562 = +97{,}698$</p>
+              <p class="text-emerald-300 font-bold pt-2 border-t border-slate-700">VP Total TS = +273,077</p>
+            </div>
+            <div class="bg-slate-800/90 rounded-2xl p-4 border border-slate-700 space-y-2 font-mono">
+              <h4 class="font-bold text-emerald-300">TG — 2 ciclos</h4>
+              <p>$\Sigma VP_{Ing} = 360{,}000 \times 5.420619 = +1{,}951{,}423$</p>
+              <p>$\Sigma VP_{CAO} = -60{,}000 \times 5.420619 = -325{,}237$</p>
+              <p>$VP_{Reinv} = -850{,}000 \times 0.432328 = -367{,}479$</p>
+              <p>$\Sigma VP_{VS} = 160{,}000 \times 0.619235 = +99{,}078$</p>
+              <p class="text-emerald-300 font-bold pt-2 border-t border-slate-700">VP Total TG = +507,785</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- CASO 4 docente -->
+        <div id="tab-caso4" class="tab-docente-content hidden space-y-5">
+          <div class="bg-slate-800/80 p-5 rounded-2xl border border-slate-700/80">
+            <span class="text-[11px] font-mono uppercase tracking-widest text-fuchsia-400 font-bold bg-fuchsia-950/60 border border-fuchsia-800 px-2.5 py-1 rounded-md">Caso 4 · Inflación</span>
+            <h3 class="text-lg sm:text-2xl font-black text-white mt-1.5">MCM = 35 años · i nominal = 18% · f = 6%</h3>
+            <p class="text-xs text-slate-400 mt-1">
+              <strong>Regla:</strong> flujos nominales ↔ TMAR nominal. Ganador: <strong class="text-emerald-400">Línea 2 (+652,505 MXN)</strong>.
+            </p>
+          </div>
+          <div class="bg-slate-950 p-4 rounded-xl border border-slate-800 space-y-2">
+            <h4 class="text-xs font-bold text-fuchsia-300 uppercase tracking-wider">Factores clave al 18% sobre 35 años:</h4>
+            <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2 text-xs font-mono">
+              <div class="bg-slate-900 p-2 rounded border border-slate-800 text-center"><span class="text-teal-400 block text-[10px]">Serie 35a</span><strong>5.544144</strong></div>
+              <div class="bg-slate-900 p-2 rounded border border-slate-800 text-center"><span class="text-teal-400 block text-[10px]">(1.18)^-5</span><strong>0.437109</strong></div>
+              <div class="bg-slate-900 p-2 rounded border border-slate-800 text-center"><span class="text-teal-400 block text-[10px]">(1.18)^-7</span><strong>0.313914</strong></div>
+              <div class="bg-slate-900 p-2 rounded border border-slate-800 text-center"><span class="text-teal-400 block text-[10px]">Σ reinv L1</span><strong>0.830949</strong></div>
+              <div class="bg-slate-900 p-2 rounded border border-slate-800 text-center"><span class="text-teal-400 block text-[10px]">Σ reinv L2</span><strong>0.481759</strong></div>
+              <div class="bg-slate-900 p-2 rounded border border-slate-800 text-center"><span class="text-teal-400 block text-[10px]">Σ VS L1/L2</span><strong>1.0516/0.6061</strong></div>
+            </div>
+          </div>
+          <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 text-xs">
+            <div class="bg-slate-800/90 rounded-2xl p-4 border border-slate-700 space-y-2 font-mono">
+              <h4 class="font-bold text-amber-300">Línea 1 — 7 ciclos de 5 años</h4>
+              <p>$VP_{Ing-CAO} = 340{,}000 \times 5.544144 = +1{,}885{,}009$</p>
+              <p>$VP_{Reinv} = -1{,}000{,}000 \times (1 + 0.830949) = -1{,}830{,}949$</p>
+              <p>$VP_{VS} = 120{,}000 \times 1.051553 = +126{,}186$</p>
+              <p class="text-emerald-300 font-bold pt-2 border-t border-slate-700">VP Total L1 ≈ +180,246 MXN</p>
+            </div>
+            <div class="bg-slate-800/90 rounded-2xl p-4 border border-slate-700 space-y-2 font-mono">
+              <h4 class="font-bold text-emerald-300">Línea 2 — 5 ciclos de 7 años</h4>
+              <p>$VP_{Ing-CAO} = 470{,}000 \times 5.544144 = +2{,}605{,}748$</p>
+              <p>$VP_{Reinv} = -1{,}400{,}000 \times (1 + 0.481759) = -2{,}074{,}463$</p>
+              <p>$VP_{VS} = 200{,}000 \times 0.606100 = +121{,}220$</p>
+              <p class="text-emerald-300 font-bold pt-2 border-t border-slate-700">VP Total L2 ≈ +652,505 MXN</p>
+            </div>
+          </div>
+          <div class="bg-slate-900 p-3 rounded-xl border border-slate-700 text-xs text-slate-300 space-y-1">
+            <p class="font-mono text-teal-300">$i_r = (1.18)/(1.06) - 1 \approx 11.32\%$</p>
+            <p>Si conviertes flujos a reales y descuentas a $i_r$, obtienes el mismo VP. Cualquier mezcla produce VP distorsionado.</p>
+          </div>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <!-- TEMPLATE PDF -->
+  <div id="reporte-imprimible" class="hidden bg-white p-8 max-w-4xl mx-auto text-slate-800 font-sans border border-slate-300">
+    <div class="border-b-2 border-slate-800 pb-3 mb-4 flex justify-between items-start flex-wrap gap-2">
+      <div>
+        <div class="text-[10px] font-bold text-slate-500 tracking-wider uppercase">BENEMÉRITA UNIVERSIDAD AUTÓNOMA DE PUEBLA</div>
+        <h1 class="text-base font-black text-slate-900 tracking-tight">DICTAMEN: VALOR PRESENTE CON VIDAS DIFERENTES (MCM)</h1>
+        <p class="text-[11px] text-slate-600">Facultad de Ingeniería • AmatIA LabX</p>
+        <p class="text-[11px] font-semibold text-slate-700">Cátedra: Mtro. José Alfredo Ávila de la Rosa</p>
+      </div>
+      <div class="text-right">
+        <span class="inline-block bg-slate-900 text-white text-[10px] font-mono font-bold px-2 py-0.5 rounded">FOLIO: <span id="pdfFolio">ALX-BUAP-0000</span></span>
+        <p class="text-[10px] text-slate-600 mt-1">Fecha:</p>
+        <p id="pdfFecha" class="text-xs font-bold font-mono text-slate-800">--/--/----</p>
+      </div>
+    </div>
+
+    <div class="bg-slate-50 rounded p-2.5 border border-slate-200 mb-4 text-xs grid grid-cols-2 gap-4">
+      <div><span class="font-bold text-slate-600 block text-[10px]">Estudiante:</span><span id="pdfNombre" class="font-bold text-slate-900 text-xs">--</span></div>
+      <div><span class="font-bold text-slate-600 block text-[10px]">Matrícula:</span><span id="pdfMatricula" class="font-mono text-slate-900 font-bold text-xs">--</span></div>
+    </div>
+
+    <div class="mb-4 space-y-1.5 border-b border-slate-200 pb-3">
+      <div class="flex justify-between items-center flex-wrap gap-2">
+        <h2 class="font-bold text-xs uppercase tracking-wider text-slate-800">1. Logística Puebla–Tlaxcala (i=10%, MCM = <span id="pdfC1_mcm">--</span>)</h2>
+        <span id="pdfStatusC1" class="text-[9px] font-bold px-2 py-0.5 rounded bg-slate-200">PENDIENTE</span>
+      </div>
+      <table class="w-full text-[10px] border border-slate-300 text-left">
+        <thead class="bg-slate-100 font-bold">
+          <tr><th class="p-1 border">Alt.</th><th class="p-1 border">Vida</th><th class="p-1 border">Σ VP Ing.</th><th class="p-1 border">Σ VP CAO</th><th class="p-1 border">Σ VP VS</th><th class="p-1 border">VP Neto</th></tr>
+        </thead>
+        <tbody class="font-mono text-[10px]">
+          <tr><td class="p-1 border font-sans font-bold">A: Camionetas</td><td class="p-1 border font-sans">3a (2 ciclos)</td><td class="p-1 border" id="pdfC1_ingA">--</td><td class="p-1 border" id="pdfC1_caoA">--</td><td class="p-1 border" id="pdfC1_salA">--</td><td class="p-1 border font-bold" id="pdfC1_valA">--</td></tr>
+          <tr><td class="p-1 border font-sans font-bold">B: Camión</td><td class="p-1 border font-sans">6a (1 ciclo)</td><td class="p-1 border" id="pdfC1_ingB">--</td><td class="p-1 border" id="pdfC1_caoB">--</td><td class="p-1 border" id="pdfC1_salB">--</td><td class="p-1 border font-bold text-emerald-800" id="pdfC1_valB">--</td></tr>
+        </tbody>
+      </table>
+      <div class="bg-slate-50 p-2 rounded text-[10px]">
+        <p><strong>Selección:</strong> <span id="pdfC1_sel">--</span></p>
+        <p><strong>Dictamen:</strong> <span id="pdfC1_rec" class="italic text-slate-700">--</span></p>
+      </div>
+    </div>
+
+    <div class="mb-4 space-y-1.5 border-b border-slate-200 pb-3">
+      <div class="flex justify-between items-center flex-wrap gap-2">
+        <h2 class="font-bold text-xs uppercase tracking-wider text-slate-800">2. Bombeo Cuautlancingo (i=12%, MCM = <span id="pdfC2_mcm">--</span>)</h2>
+        <span id="pdfStatusC2" class="text-[9px] font-bold px-2 py-0.5 rounded bg-slate-200">PENDIENTE</span>
+      </div>
+      <table class="w-full text-[10px] border border-slate-300 text-left">
+        <thead class="bg-slate-100 font-bold">
+          <tr><th class="p-1 border">Alt.</th><th class="p-1 border">Vida</th><th class="p-1 border">Σ VP Ing.</th><th class="p-1 border">Σ VP CAO</th><th class="p-1 border">Σ VP VS</th><th class="p-1 border">VP Neto</th></tr>
+        </thead>
+        <tbody class="font-mono text-[10px]">
+          <tr><td class="p-1 border font-sans font-bold">S1: Centrífuga</td><td class="p-1 border font-sans">3a (4 ciclos)</td><td class="p-1 border" id="pdfC2_ingS1">--</td><td class="p-1 border" id="pdfC2_caoS1">--</td><td class="p-1 border" id="pdfC2_salS1">--</td><td class="p-1 border font-bold" id="pdfC2_valS1">--</td></tr>
+          <tr><td class="p-1 border font-sans font-bold">S2: Sumergible</td><td class="p-1 border font-sans">4a (3 ciclos)</td><td class="p-1 border" id="pdfC2_ingS2">--</td><td class="p-1 border" id="pdfC2_caoS2">--</td><td class="p-1 border" id="pdfC2_salS2">--</td><td class="p-1 border font-bold text-emerald-800" id="pdfC2_valS2">--</td></tr>
+        </tbody>
+      </table>
+      <div class="bg-slate-50 p-2 rounded text-[10px]">
+        <p><strong>Selección:</strong> <span id="pdfC2_sel">--</span></p>
+        <p><strong>Dictamen:</strong> <span id="pdfC2_rec" class="italic text-slate-700">--</span></p>
+      </div>
+    </div>
+
+    <div class="mb-4 space-y-1.5 border-b border-slate-200 pb-3">
+      <div class="flex justify-between items-center flex-wrap gap-2">
+        <h2 class="font-bold text-xs uppercase tracking-wider text-slate-800">3. Generación FINSA (i=15%, MCM = <span id="pdfC3_mcm">--</span>)</h2>
+        <span id="pdfStatusC3" class="text-[9px] font-bold px-2 py-0.5 rounded bg-slate-200">PENDIENTE</span>
+      </div>
+      <table class="w-full text-[10px] border border-slate-300 text-left">
+        <thead class="bg-slate-100 font-bold">
+          <tr><th class="p-1 border">Alt.</th><th class="p-1 border">Vida</th><th class="p-1 border">Σ VP Ing.</th><th class="p-1 border">Σ VP CAO</th><th class="p-1 border">Σ VP VS</th><th class="p-1 border">VP Neto</th></tr>
+        </thead>
+        <tbody class="font-mono text-[10px]">
+          <tr><td class="p-1 border font-sans font-bold">TS: Solar</td><td class="p-1 border font-sans">4a (3 ciclos)</td><td class="p-1 border" id="pdfC3_ingTS">--</td><td class="p-1 border" id="pdfC3_caoTS">--</td><td class="p-1 border" id="pdfC3_salTS">--</td><td class="p-1 border font-bold" id="pdfC3_valTS">--</td></tr>
+          <tr><td class="p-1 border font-sans font-bold">TG: Turbina</td><td class="p-1 border font-sans">6a (2 ciclos)</td><td class="p-1 border" id="pdfC3_ingTG">--</td><td class="p-1 border" id="pdfC3_caoTG">--</td><td class="p-1 border" id="pdfC3_salTG">--</td><td class="p-1 border font-bold text-emerald-800" id="pdfC3_valTG">--</td></tr>
+        </tbody>
+      </table>
+      <div class="bg-slate-50 p-2 rounded text-[10px]">
+        <p><strong>Selección:</strong> <span id="pdfC3_sel">--</span></p>
+        <p><strong>Dictamen:</strong> <span id="pdfC3_rec" class="italic text-slate-700">--</span></p>
+      </div>
+    </div>
+
+    <div class="mb-4 space-y-1.5">
+      <div class="flex justify-between items-center flex-wrap gap-2">
+        <h2 class="font-bold text-xs uppercase tracking-wider text-slate-800">4. Inflación (i nominal=18%, f=6%, MCM = <span id="pdfC4_mcm">--</span>)</h2>
+        <span id="pdfStatusC4" class="text-[9px] font-bold px-2 py-0.5 rounded bg-slate-200">PENDIENTE</span>
+      </div>
+      <div class="bg-slate-50 p-2 rounded text-[10px]">
+        <p><strong>VP Total L1:</strong> <span id="pdfC4_valL1" class="font-mono">--</span></p>
+        <p><strong>VP Total L2:</strong> <span id="pdfC4_valL2" class="font-mono">--</span></p>
+        <p><strong>Selección:</strong> <span id="pdfC4_sel">--</span></p>
+        <p><strong>Dictamen:</strong> <span id="pdfC4_rec" class="italic text-slate-700">--</span></p>
+      </div>
+    </div>
+
+    <div class="mt-6 pt-4 border-t-2 border-slate-800 grid grid-cols-2 gap-8 text-center text-xs">
+      <div>
+        <div class="border-b border-slate-400 pb-6 mb-1"></div>
+        <p class="font-bold text-slate-900" id="firmaNombre">Firma del Estudiante</p>
+        <p class="text-[9px] text-slate-500">Acreditación de resolución analítica</p>
+      </div>
+      <div>
+        <div class="border-b border-slate-400 pb-6 mb-1"></div>
+        <p class="font-bold text-slate-900">Mtro. José Alfredo Ávila de la Rosa</p>
+        <p class="text-[9px] text-slate-500">Profesor Titular • BUAP - AmatIA LabX</p>
+      </div>
+    </div>
+  </div>
+
+  <button id="btnCerrarPreview" onclick="cerrarPrevisualizacion()" aria-label="Cerrar previsualización"
+          class="hidden fixed bottom-6 left-6 bg-slate-900 text-white px-4 py-2 rounded-xl shadow-2xl z-40 text-xs font-bold">
+    <i class="fa-solid fa-xmark" aria-hidden="true"></i> Cerrar previsualización
+  </button>
+
+  <script>
+    /* ============ Estado ============ */
+    let score = 0, validC1 = false, validC2 = false, validC3 = false, validC4 = false;
+    let pistasUsadas = 0;
+    const TOLERANCIA = 35;
+    const TOLERANCIA_C4 = 100;
+    const CAMPOS_PERSIST = [
+      'alumnoNombre','alumnoMatricula',
+      'c1_mcm','c1_vpIngA','c1_vpCaoA','c1_vpSalA','c1_vpIngB','c1_vpCaoB','c1_vpSalB','c1_vpTotalA','c1_vpTotalB','c1_factorEstrategico','c1_seleccion','c1_justificacion',
+      'c2_mcm','c2_vpIngS1','c2_vpCaoS1','c2_vpSalS1','c2_vpIngS2','c2_vpCaoS2','c2_vpSalS2','c2_vpTotalS1','c2_vpTotalS2','c2_factorEstrategico','c2_seleccion','c2_justificacion',
+      'c3_mcm','c3_vpIngTS','c3_vpCaoTS','c3_vpSalTS','c3_vpIngTG','c3_vpCaoTG','c3_vpSalTG','c3_vpTotalTS','c3_vpTotalTG','c3_factorEstrategico','c3_seleccion','c3_justificacion',
+      'c4_mcm','c4_vpTotalL1','c4_vpTotalL2','c4_factorEstrategico','c4_seleccion','c4_justificacion'
+    ];
+
+    /* ============ Utilidades ============ */
+    const fmt = n => Number(n).toLocaleString('es-MX');
+    const tiposet = (el) => {
+      try { if (window.MathJax?.typesetPromise) MathJax.typesetPromise(el ? [el] : undefined).catch(()=>{}); } catch(e){}
+    };
+    async function sha256(text) {
+      const buf = new TextEncoder().encode(text);
+      const hash = await crypto.subtle.digest('SHA-256', buf);
+      return Array.from(new Uint8Array(hash)).map(b => b.toString(16).padStart(2,'0')).join('');
+    }
+    function marcarError(id, ok) {
+      const el = document.getElementById(id);
+      if (!el) return;
+      el.classList.toggle('field-error', !ok);
+    }
+    function limpiarErrores(ids) { ids.forEach(id => marcarError(id, true)); }
+
+    /* ============ Persistencia ============ */
+    function guardarEstado() {
+      CAMPOS_PERSIST.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) localStorage.setItem('vidas_' + id, el.value);
+      });
+      localStorage.setItem('vidas_score', String(score));
+      localStorage.setItem('vidas_pistas', String(pistasUsadas));
+      localStorage.setItem('vidas_valid', JSON.stringify({validC1, validC2, validC3, validC4}));
+    }
+    function cargarEstado() {
+      CAMPOS_PERSIST.forEach(id => {
+        const v = localStorage.getItem('vidas_' + id);
+        const el = document.getElementById(id);
+        if (v !== null && el) el.value = v;
+      });
+      pistasUsadas = parseInt(localStorage.getItem('vidas_pistas') || '0');
+      try {
+        const v = JSON.parse(localStorage.getItem('vidas_valid') || '{}');
+        validC1 = !!v.validC1; validC2 = !!v.validC2; validC3 = !!v.validC3; validC4 = !!v.validC4;
+      } catch(e){}
+      if (validC1) marcarStatus('statusC1','Validado', true);
+      if (validC2) marcarStatus('statusC2','Validado', true);
+      if (validC3) marcarStatus('statusC3','Validado', true);
+      if (validC4) marcarStatus('statusC4','Validado', true);
+      actualizarProgreso();
+      actualizarPistasBadge();
+    }
+    function reiniciarActividad() {
+      if (!confirm('¿Reiniciar toda la actividad? Se borrarán tus respuestas y el progreso.')) return;
+      CAMPOS_PERSIST.forEach(id => localStorage.removeItem('vidas_' + id));
+      localStorage.removeItem('vidas_score');
+      localStorage.removeItem('vidas_pistas');
+      localStorage.removeItem('vidas_valid');
+      location.reload();
+    }
+
+    /* ============ Init ============ */
+    window.addEventListener('DOMContentLoaded', async () => {
+      const hoy = new Date();
+      const fechaFormateada = hoy.toLocaleDateString('es-MX', { year:'numeric', month:'long', day:'numeric' });
+      document.getElementById('alumnoFecha').value = fechaFormateada;
+      document.getElementById('pdfFecha').innerText = fechaFormateada;
+      const folio = `ALX-BUAP-${hoy.getFullYear()}-${Math.floor(1000+Math.random()*9000)}`;
+      document.getElementById('pdfFolio').innerText = folio;
+
+      cargarEstado();
+      CAMPOS_PERSIST.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.addEventListener('input', guardarEstado);
+      });
+
+      document.addEventListener('keydown', e => {
+        if (e.key === 'Escape') {
+          if (!document.getElementById('modalCatedraDocente').classList.contains('hidden')) cerrarSolucionarioCatedra();
+          const preview = document.getElementById('reporte-imprimible');
+          if (!preview.classList.contains('hidden')) cerrarPrevisualizacion();
+        }
+      });
+
+      tiposet();
+    });
+
+    /* ============ Pistas ============ */
+    function togglePista(id) {
+      const el = document.getElementById(id);
+      if (!el) return;
+      if (el.classList.contains('hidden')) {
+        el.classList.remove('hidden');
+        pistasUsadas++;
+        actualizarPistasBadge();
+        guardarEstado();
+        tiposet(el);
+      } else {
+        el.classList.add('hidden');
+      }
+    }
+    function actualizarPistasBadge() {
+      const b = document.getElementById('pistasBadge');
+      if (b) b.innerText = pistasUsadas;
+    }
+
+    /* ============ Modal docente ============ */
+    function abrirSolucionarioCatedra() {
+      document.getElementById('modalCatedraDocente').classList.remove('hidden');
+      document.body.style.overflow = 'hidden';
+      setTimeout(() => document.getElementById('inputPassCatedra')?.focus(), 100);
+      tiposet();
+    }
+    function cerrarSolucionarioCatedra() {
+      document.getElementById('modalCatedraDocente').classList.add('hidden');
+      document.body.style.overflow = '';
+    }
+    async function verificarPasswordCatedra() {
+      const pass = document.getElementById('inputPassCatedra').value.trim();
+      const err = document.getElementById('msgErrorCatedra');
+      const [hashInput, hashReal] = await Promise.all([sha256(pass), sha256('Tachi008')]);
+      if (hashInput === hashReal) {
+        document.getElementById('authCatedraView').classList.add('hidden');
+        document.getElementById('pizarraCatedraView').classList.remove('hidden');
+        document.getElementById('btnAutoDemo').classList.remove('hidden');
+        err.classList.add('hidden');
+        tiposet();
+      } else {
+        err.classList.remove('hidden');
+      }
+    }
+    function cambiarPestanaDocente(tabId) {
+      document.querySelectorAll('.tab-docente-content').forEach(el => el.classList.add('hidden'));
+      document.querySelectorAll('.tab-docente-btn').forEach(btn => {
+        btn.classList.remove('bg-buap','text-white','border-teal-500/40','shadow-md');
+        btn.classList.add('text-slate-400','border-transparent');
+      });
+      const target = document.getElementById(tabId);
+      if (target) target.classList.remove('hidden');
+      const activeNav = document.getElementById('nav-' + tabId.replace('tab-',''));
+      if (activeNav) {
+        activeNav.classList.add('bg-buap','text-white','border-teal-500/40','shadow-md');
+        activeNav.classList.remove('text-slate-400','border-transparent');
+      }
+      tiposet(target);
+    }
+
+    /* ============ Demo ============ */
+    function demoLlenarValores() {
+      const data = {
+        c1_mcm:6, c1_vpIngA:'1045263', c1_vpCaoA:'-283092', c1_vpSalA:'78947',
+        c1_vpIngB:'1132368', c1_vpCaoB:'-195987', c1_vpSalB:'62092',
+        c1_vpTotalA:270118, c1_vpTotalB:348473,
+        c1_factorEstrategico:'correcto', c1_seleccion:'B',
+        c1_justificacion:'Camión Diésel: mayor VP neto (+348,473) en 6 años, menores costos operativos y sin reinversión intermedia.',
+        c2_mcm:12, c2_vpIngS1:'712353', c2_vpCaoS1:'-216803', c2_vpSalS1:'55071',
+        c2_vpIngS2:'805269', c2_vpCaoS2:'-136276', c2_vpSalS2:'58324',
+        c2_vpTotalS1:126827, c2_vpTotalS2:215108,
+        c2_factorEstrategico:'correcto', c2_seleccion:'S2',
+        c2_justificacion:'S2 maximiza VP y minimiza paros operativos en 12 años.',
+        c3_mcm:12, c3_vpIngTS:'1409361', c3_vpCaoTS:'-189722', c3_vpSalTS:'97698',
+        c3_vpIngTG:'1951423', c3_vpCaoTG:'-325237', c3_vpSalTG:'99078',
+        c3_vpTotalTS:273077, c3_vpTotalTG:507785,
+        c3_factorEstrategico:'correcto', c3_seleccion:'TG',
+        c3_justificacion:'TG ofrece mayor VP (+507,785) sujeto a volatilidad del gas. TS es defendible por menor riesgo.',
+        c4_mcm:35, c4_vpTotalL1:180246, c4_vpTotalL2:652505,
+        c4_factorEstrategico:'correcto', c4_seleccion:'L2',
+        c4_justificacion:'Coherencia nominal/nominal. L2 genera VP muy superior (+652,505 vs +180,246) con 5 ciclos vs 7.'
+      };
+      Object.entries(data).forEach(([k,v]) => {
+        const el = document.getElementById(k);
+        if (el) el.value = v;
+      });
+      guardarEstado();
+      mostrarNotificacion('Datos maestros cargados.', 'info');
+      cerrarSolucionarioCatedra();
+    }
+
+    /* ============ Validaciones ============ */
+    function marcarStatus(id, texto, ok) {
+      const el = document.getElementById(id);
+      if (!el) return;
+      el.className = ok
+        ? 'text-xs font-bold px-3 py-1.5 rounded-full bg-emerald-100 text-emerald-800 flex items-center gap-1.5'
+        : 'text-xs font-bold px-3 py-1.5 rounded-full bg-rose-100 text-rose-800 flex items-center gap-1.5';
+      el.innerHTML = ok
+        ? `<i class="fa-solid fa-circle-check text-emerald-600" aria-hidden="true"></i> ${texto}`
+        : `<i class="fa-solid fa-triangle-exclamation text-rose-600" aria-hidden="true"></i> ${texto}`;
+    }
+
+    function validarCaso1() {
+      const ids = ['c1_mcm','c1_vpIngA','c1_vpCaoA','c1_vpSalA','c1_vpIngB','c1_vpCaoB','c1_vpSalB','c1_vpTotalA','c1_vpTotalB','c1_factorEstrategico','c1_seleccion','c1_justificacion'];
+      limpiarErrores(ids);
+      const checks = {
+        c1_mcm: parseInt(document.getElementById('c1_mcm').value) === 6,
+        c1_vpIngA: document.getElementById('c1_vpIngA').value === '1045263',
+        c1_vpCaoA: document.getElementById('c1_vpCaoA').value === '-283092',
+        c1_vpSalA: document.getElementById('c1_vpSalA').value === '78947',
+        c1_vpIngB: document.getElementById('c1_vpIngB').value === '1132368',
+        c1_vpCaoB: document.getElementById('c1_vpCaoB').value === '-195987',
+        c1_vpSalB: document.getElementById('c1_vpSalB').value === '62092',
+        c1_vpTotalA: Math.abs(parseFloat(document.getElementById('c1_vpTotalA').value) - 270118) <= TOLERANCIA,
+        c1_vpTotalB: Math.abs(parseFloat(document.getElementById('c1_vpTotalB').value) - 348473) <= TOLERANCIA,
+        c1_factorEstrategico: document.getElementById('c1_factorEstrategico').value === 'correcto',
+        c1_seleccion: document.getElementById('c1_seleccion').value === 'B',
+        c1_justificacion: document.getElementById('c1_justificacion').value.trim().length >= 15
+      };
+      Object.entries(checks).forEach(([id, ok]) => marcarError(id, ok));
+      const ok = Object.values(checks).every(Boolean);
+      if (ok) {
+        validC1 = true;
+        marcarStatus('statusC1', 'Validado (+25 XP)', true);
+        mostrarNotificacion('¡Correcto! Caso 1 dominado (2 ciclos vs 1 ciclo, MCM=6).', 'success');
+        dispararConfeti();
+      } else {
+        validC1 = false;
+        marcarStatus('statusC1', 'Revisar campos', false);
+        mostrarNotificacion('Revisa los campos marcados en rojo. Opción A reinvierte en t=3.', 'error');
+      }
+      actualizarProgreso(); guardarEstado();
+    }
+
+    function validarCaso2() {
+      const ids = ['c2_mcm','c2_vpIngS1','c2_vpCaoS1','c2_vpSalS1','c2_vpIngS2','c2_vpCaoS2','c2_vpSalS2','c2_vpTotalS1','c2_vpTotalS2','c2_factorEstrategico','c2_seleccion','c2_justificacion'];
+      limpiarErrores(ids);
+      const checks = {
+        c2_mcm: parseInt(document.getElementById('c2_mcm').value) === 12,
+        c2_vpIngS1: document.getElementById('c2_vpIngS1').value === '712353',
+        c2_vpCaoS1: document.getElementById('c2_vpCaoS1').value === '-216803',
+        c2_vpSalS1: document.getElementById('c2_vpSalS1').value === '55071',
+        c2_vpIngS2: document.getElementById('c2_vpIngS2').value === '805269',
+        c2_vpCaoS2: document.getElementById('c2_vpCaoS2').value === '-136276',
+        c2_vpSalS2: document.getElementById('c2_vpSalS2').value === '58324',
+        c2_vpTotalS1: Math.abs(parseFloat(document.getElementById('c2_vpTotalS1').value) - 126827) <= TOLERANCIA,
+        c2_vpTotalS2: Math.abs(parseFloat(document.getElementById('c2_vpTotalS2').value) - 215108) <= TOLERANCIA,
+        c2_factorEstrategico: document.getElementById('c2_factorEstrategico').value === 'correcto',
+        c2_seleccion: document.getElementById('c2_seleccion').value === 'S2',
+        c2_justificacion: document.getElementById('c2_justificacion').value.trim().length >= 15
+      };
+      Object.entries(checks).forEach(([id, ok]) => marcarError(id, ok));
+      const ok = Object.values(checks).every(Boolean);
+      if (ok) {
+        validC2 = true;
+        marcarStatus('statusC2', 'Validado (+25 XP)', true);
+        mostrarNotificacion('¡Correcto! Caso 2 dominado (4 vs 3 ciclos, MCM=12).', 'success');
+        dispararConfeti();
+      } else {
+        validC2 = false;
+        marcarStatus('statusC2', 'Revisar campos', false);
+        mostrarNotificacion('Revisa los campos en rojo (S1 reinvierte en t=3,6,9; S2 en t=4,8).', 'error');
+      }
+      actualizarProgreso(); guardarEstado();
+    }
+
+    function validarCaso3() {
+      const ids = ['c3_mcm','c3_vpIngTS','c3_vpCaoTS','c3_vpSalTS','c3_vpIngTG','c3_vpCaoTG','c3_vpSalTG','c3_vpTotalTS','c3_vpTotalTG','c3_factorEstrategico','c3_seleccion','c3_justificacion'];
+      limpiarErrores(ids);
+      const checks = {
+        c3_mcm: parseInt(document.getElementById('c3_mcm').value) === 12,
+        c3_vpIngTS: document.getElementById('c3_vpIngTS').value === '1409361',
+        c3_vpCaoTS: document.getElementById('c3_vpCaoTS').value === '-189722',
+        c3_vpSalTS: document.getElementById('c3_vpSalTS').value === '97698',
+        c3_vpIngTG: document.getElementById('c3_vpIngTG').value === '1951423',
+        c3_vpCaoTG: document.getElementById('c3_vpCaoTG').value === '-325237',
+        c3_vpSalTG: document.getElementById('c3_vpSalTG').value === '99078',
+        c3_vpTotalTS: Math.abs(parseFloat(document.getElementById('c3_vpTotalTS').value) - 273077) <= TOLERANCIA,
+        c3_vpTotalTG: Math.abs(parseFloat(document.getElementById('c3_vpTotalTG').value) - 507785) <= TOLERANCIA,
+        c3_factorEstrategico: document.getElementById('c3_factorEstrategico').value === 'correcto',
+        c3_seleccion: ['TG','TS'].includes(document.getElementById('c3_seleccion').value),
+        c3_justificacion: document.getElementById('c3_justificacion').value.trim().length >= 15
+      };
+      Object.entries(checks).forEach(([id, ok]) => marcarError(id, ok));
+      const ok = Object.values(checks).every(Boolean);
+      if (ok) {
+        validC3 = true;
+        const sel = document.getElementById('c3_seleccion').value;
+        if (sel === 'TS') {
+          marcarStatus('statusC3', 'Validado (defendible)', true);
+          mostrarNotificacion('Selección TS defendible por gestión de riesgo. Óptimo económico: TG.', 'info');
+        } else {
+          marcarStatus('statusC3', 'Validado (+25 XP)', true);
+          mostrarNotificacion('¡Correcto! TG maximiza VP en MCM=12.', 'success');
+        }
+        dispararConfeti();
+      } else {
+        validC3 = false;
+        marcarStatus('statusC3', 'Revisar campos', false);
+        mostrarNotificacion('Revisa los campos en rojo (TS: t=4,8; TG: t=6).', 'error');
+      }
+      actualizarProgreso(); guardarEstado();
+    }
+
+    function validarCaso4() {
+      const ids = ['c4_mcm','c4_vpTotalL1','c4_vpTotalL2','c4_factorEstrategico','c4_seleccion','c4_justificacion'];
+      limpiarErrores(ids);
+      const totL1 = parseFloat(document.getElementById('c4_vpTotalL1').value);
+      const totL2 = parseFloat(document.getElementById('c4_vpTotalL2').value);
+      const checks = {
+        c4_mcm: parseInt(document.getElementById('c4_mcm').value) === 35,
+        c4_vpTotalL1: Math.abs(totL1 - 180246) <= TOLERANCIA_C4,
+        c4_vpTotalL2: Math.abs(totL2 - 652505) <= TOLERANCIA_C4,
+        c4_factorEstrategico: document.getElementById('c4_factorEstrategico').value === 'correcto',
+        c4_seleccion: document.getElementById('c4_seleccion').value === 'L2',
+        c4_justificacion: document.getElementById('c4_justificacion').value.trim().length >= 15
+      };
+      Object.entries(checks).forEach(([id, ok]) => marcarError(id, ok));
+      const ok = Object.values(checks).every(Boolean);
+      if (ok) {
+        validC4 = true;
+        marcarStatus('statusC4', 'Validado (+25 XP)', true);
+        mostrarNotificacion('¡Correcto! L2 domina MCM=35 (+652,505 vs +180,246).', 'success');
+        dispararConfeti();
+      } else {
+        validC4 = false;
+        marcarStatus('statusC4', 'Revisar campos', false);
+        mostrarNotificacion('Revisa: L1 ≈ +180,246 · L2 ≈ +652,505 (tolerancia ±100 por redondeo).', 'error');
+      }
+      actualizarProgreso(); guardarEstado();
+    }
+
+    /* ============ Progreso ============ */
+    function actualizarProgreso() {
+      score = (validC1?25:0) + (validC2?25:0) + (validC3?25:0) + (validC4?25:0);
+      const badge = document.getElementById('scoreBadge');
+      const rankBadge = document.getElementById('rankBadge');
+      const trophyIcon = document.getElementById('trophyIcon');
+      const progressBar = document.getElementById('progressBar');
+      badge.innerText = `${score} / 100 XP`;
+      progressBar.style.width = `${score}%`;
+      if (score === 100) {
+        badge.className = 'font-mono text-xs font-black text-amber-300 badge-glow';
+        rankBadge.innerText = 'Master Financiero';
+        rankBadge.className = 'text-xs font-extrabold text-amber-300 uppercase tracking-wider';
+        trophyIcon.className = 'fa-solid fa-trophy text-amber-400 text-sm anim-float';
+      } else if (score >= 50) {
+        badge.className = 'font-mono text-xs font-bold text-teal-300';
+        rankBadge.innerText = 'Analista Avanzado';
+        rankBadge.className = 'text-xs font-bold text-teal-300 uppercase tracking-wider';
+        trophyIcon.className = 'fa-solid fa-award text-teal-400 text-sm';
+      } else if (score > 0) {
+        rankBadge.innerText = 'Analista en Formación';
+        trophyIcon.className = 'fa-solid fa-seedling text-amber-400 text-sm';
+      } else {
+        rankBadge.innerText = 'Iniciación';
+        trophyIcon.className = 'fa-solid fa-seedling text-amber-400 text-sm';
+      }
+    }
+
+    /* ============ PDF ============ */
+    function llenarDatosPDF() {
+      const nombre = document.getElementById('alumnoNombre').value.trim() || 'Estudiante Sin Registrar';
+      const matricula = document.getElementById('alumnoMatricula').value.trim() || 'S/M';
+      document.getElementById('pdfNombre').innerText = nombre;
+      document.getElementById('pdfMatricula').innerText = matricula;
+      document.getElementById('firmaNombre').innerText = nombre;
+
+      const setTxt = (id, val) => { const el = document.getElementById(id); if (el) el.innerText = val; };
+      const fmtVal = (v, prefix) => (prefix||'') + fmt(v) + ' MXN';
+
+      setTxt('pdfC1_mcm', document.getElementById('c1_mcm').value || '6');
+      setTxt('pdfC1_ingA', fmtVal(document.getElementById('c1_vpIngA').value || 1045263, '+'));
+      setTxt('pdfC1_caoA', fmtVal(document.getElementById('c1_vpCaoA').value || -283092));
+      setTxt('pdfC1_salA', fmtVal(document.getElementById('c1_vpSalA').value || 78947, '+'));
+      setTxt('pdfC1_valA', fmtVal(document.getElementById('c1_vpTotalA').value || 270118, '+'));
+      setTxt('pdfC1_ingB', fmtVal(document.getElementById('c1_vpIngB').value || 1132368, '+'));
+      setTxt('pdfC1_caoB', fmtVal(document.getElementById('c1_vpCaoB').value || -195987));
+      setTxt('pdfC1_salB', fmtVal(document.getElementById('c1_vpSalB').value || 62092, '+'));
+      setTxt('pdfC1_valB', fmtVal(document.getElementById('c1_vpTotalB').value || 348473, '+'));
+      setTxt('pdfC1_sel', document.getElementById('c1_seleccion').value === 'B' ? 'Camión Diésel (Opción B)' : 'Camionetas (Opción A)');
+      setTxt('pdfC1_rec', document.getElementById('c1_justificacion').value || 'Sin dictamen.');
+      document.getElementById('pdfStatusC1').innerText = validC1 ? 'VERIFICADO' : 'PENDIENTE';
+      document.getElementById('pdfStatusC1').className = validC1 ? 'text-[9px] font-bold px-2 py-0.5 rounded bg-emerald-200 text-emerald-900' : 'text-[9px] font-bold px-2 py-0.5 rounded bg-slate-200';
+
+      setTxt('pdfC2_mcm', document.getElementById('c2_mcm').value || '12');
+      setTxt('pdfC2_ingS1', fmtVal(document.getElementById('c2_vpIngS1').value || 712353, '+'));
+      setTxt('pdfC2_caoS1', fmtVal(document.getElementById('c2_vpCaoS1').value || -216803));
+      setTxt('pdfC2_salS1', fmtVal(document.getElementById('c2_vpSalS1').value || 55071, '+'));
+      setTxt('pdfC2_valS1', fmtVal(document.getElementById('c2_vpTotalS1').value || 126827, '+'));
+      setTxt('pdfC2_ingS2', fmtVal(document.getElementById('c2_vpIngS2').value || 805269, '+'));
+      setTxt('pdfC2_caoS2', fmtVal(document.getElementById('c2_vpCaoS2').value || -136276));
+      setTxt('pdfC2_salS2', fmtVal(document.getElementById('c2_vpSalS2').value || 58324, '+'));
+      setTxt('pdfC2_valS2', fmtVal(document.getElementById('c2_vpTotalS2').value || 215108, '+'));
+      setTxt('pdfC2_sel', document.getElementById('c2_seleccion').value === 'S2' ? 'Sumergible (S2)' : 'Centrífuga (S1)');
+      setTxt('pdfC2_rec', document.getElementById('c2_justificacion').value || 'Sin dictamen.');
+      document.getElementById('pdfStatusC2').innerText = validC2 ? 'VERIFICADO' : 'PENDIENTE';
+      document.getElementById('pdfStatusC2').className = validC2 ? 'text-[9px] font-bold px-2 py-0.5 rounded bg-emerald-200 text-emerald-900' : 'text-[9px] font-bold px-2 py-0.5 rounded bg-slate-200';
+
+      setTxt('pdfC3_mcm', document.getElementById('c3_mcm').value || '12');
+      setTxt('pdfC3_ingTS', fmtVal(document.getElementById('c3_vpIngTS').value || 1409361, '+'));
+      setTxt('pdfC3_caoTS', fmtVal(document.getElementById('c3_vpCaoTS').value || -189722));
+      setTxt('pdfC3_salTS', fmtVal(document.getElementById('c3_vpSalTS').value || 97698, '+'));
+      setTxt('pdfC3_valTS', fmtVal(document.getElementById('c3_vpTotalTS').value || 273077, '+'));
+      setTxt('pdfC3_ingTG', fmtVal(document.getElementById('c3_vpIngTG').value || 1951423, '+'));
+      setTxt('pdfC3_caoTG', fmtVal(document.getElementById('c3_vpCaoTG').value || -325237));
+      setTxt('pdfC3_salTG', fmtVal(document.getElementById('c3_vpSalTG').value || 99078, '+'));
+      setTxt('pdfC3_valTG', fmtVal(document.getElementById('c3_vpTotalTG').value || 507785, '+'));
+      setTxt('pdfC3_sel', document.getElementById('c3_seleccion').value === 'TG' ? 'Turbina (TG)' : 'Solar (TS)');
+      setTxt('pdfC3_rec', document.getElementById('c3_justificacion').value || 'Sin dictamen.');
+      document.getElementById('pdfStatusC3').innerText = validC3 ? 'VERIFICADO' : 'PENDIENTE';
+      document.getElementById('pdfStatusC3').className = validC3 ? 'text-[9px] font-bold px-2 py-0.5 rounded bg-emerald-200 text-emerald-900' : 'text-[9px] font-bold px-2 py-0.5 rounded bg-slate-200';
+
+      setTxt('pdfC4_mcm', document.getElementById('c4_mcm').value || '35');
+      setTxt('pdfC4_valL1', fmtVal(document.getElementById('c4_vpTotalL1').value || 180246, '+'));
+      setTxt('pdfC4_valL2', fmtVal(document.getElementById('c4_vpTotalL2').value || 652505, '+'));
+      setTxt('pdfC4_sel', document.getElementById('c4_seleccion').value || '--');
+      setTxt('pdfC4_rec', document.getElementById('c4_justificacion').value || 'Sin dictamen.');
+      document.getElementById('pdfStatusC4').innerText = validC4 ? 'VERIFICADO' : 'PENDIENTE';
+      document.getElementById('pdfStatusC4').className = validC4 ? 'text-[9px] font-bold px-2 py-0.5 rounded bg-emerald-200 text-emerald-900' : 'text-[9px] font-bold px-2 py-0.5 rounded bg-slate-200';
+    }
+
+    function previsualizarDictamen() {
+      llenarDatosPDF();
+      const el = document.getElementById('reporte-imprimible');
+      el.classList.remove('hidden');
+      el.scrollIntoView({ behavior: 'smooth' });
+      document.getElementById('btnCerrarPreview').classList.remove('hidden');
+      mostrarNotificacion('Previsualización al pie de la página.', 'info');
+    }
+    function cerrarPrevisualizacion() {
+      document.getElementById('reporte-imprimible').classList.add('hidden');
+      document.getElementById('btnCerrarPreview').classList.add('hidden');
+    }
+
+    async function descargarReportePDF() {
+      const nombre = document.getElementById('alumnoNombre').value.trim();
+      const matricula = document.getElementById('alumnoMatricula').value.trim();
+      if (!nombre || !matricula) {
+        mostrarNotificacion('Ingresa Nombre y Matrícula antes de descargar.', 'warning');
+        return;
+      }
+      llenarDatosPDF();
+      const el = document.getElementById('reporte-imprimible');
+      el.classList.remove('hidden');
+      await new Promise(r => setTimeout(r, 300));
+      try { if (window.MathJax?.typesetPromise) await MathJax.typesetPromise([el]); } catch(e){}
+
+      const opt = {
+        margin: [8,8,8,8],
+        filename: `Dictamen_VP_Vidas_Diferentes_MCM_${matricula}_BUAP.pdf`,
+        image: { type:'jpeg', quality: 0.98 },
+        html2canvas: { scale: 2, useCORS: true },
+        jsPDF: { unit:'mm', format:'letter', orientation:'portrait' }
+      };
+      mostrarNotificacion('Generando PDF...', 'info');
+      try {
+        await html2pdf().set(opt).from(el).save();
+        mostrarNotificacion('¡PDF descargado!', 'success');
+      } catch (e) {
+        window.print();
+      }
+    }
+
+    /* ============ Notificaciones / confeti ============ */
+    function dispararConfeti() {
+      if (typeof confetti === 'function') confetti({ particleCount: 90, spread: 75, origin: { y: 0.6 } });
+    }
+    function mostrarNotificacion(mensaje, tipo = 'info') {
+      const existente = document.getElementById('toast-box');
+      if (existente) existente.remove();
+      const toast = document.createElement('div');
+      toast.id = 'toast-box';
+      let colorBg = 'bg-slate-900 text-white';
+      let icono = '<i class="fa-solid fa-circle-info text-teal-400 mr-2" aria-hidden="true"></i>';
+      if (tipo === 'success') { colorBg = 'bg-emerald-900 border border-emerald-500 text-white'; icono = '<i class="fa-solid fa-circle-check text-emerald-400 mr-2" aria-hidden="true"></i>'; }
+      else if (tipo === 'error') { colorBg = 'bg-rose-900 border border-rose-500 text-white'; icono = '<i class="fa-solid fa-triangle-exclamation text-rose-400 mr-2" aria-hidden="true"></i>'; }
+      else if (tipo === 'warning') { colorBg = 'bg-amber-900 border border-amber-500 text-white'; icono = '<i class="fa-solid fa-bell text-amber-400 mr-2" aria-hidden="true"></i>'; }
+      toast.className = `fixed bottom-6 right-6 max-w-md p-4 rounded-xl shadow-2xl z-50 text-xs sm:text-sm font-medium flex items-center ${colorBg} transition-all duration-300`;
+      toast.setAttribute('role','status');
+      toast.innerHTML = `${icono}<span>${mensaje}</span>`;
+      document.body.appendChild(toast);
+      setTimeout(() => { toast.style.opacity='0'; setTimeout(()=>toast.remove(), 400); }, 5000);
+    }
+  </script>
+</body>
+</html>
