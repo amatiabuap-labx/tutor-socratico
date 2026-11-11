@@ -83,6 +83,13 @@ h2,h3,h4{font-family:var(--font-title);margin-top:0;}
 .chart-bar { width:100%; background:var(--azul2); border-radius:4px 4px 0 0; transition:height 0.5s; min-height:2px; position:relative;}
 .chart-bar span { position:absolute; top:-20px; left:50%; transform:translateX(-50%); font-size:11px; font-weight:bold; color:var(--tx);}
 .chart-label { font-size:10px; color:var(--mut); margin-top:4px; text-align:center; height:20px;}
+
+/* NUEVO: Radar de Interacción del Alumno */
+#student-radar { display:flex; gap:12px; flex-wrap:wrap; align-items:center; padding:12px; background:var(--card); border:1px solid var(--bd); border-radius:8px; margin-bottom:12px; font-size:12px; }
+.radar-item { display:flex; align-items:center; gap:6px; color:var(--mut); font-weight:500; }
+.radar-val { font-weight:bold; color:var(--azul2); font-size:14px; }
+.progress-bg { flex:1; min-width:100px; height:6px; background:var(--bd); border-radius:3px; overflow:hidden; }
+.progress-fill { height:100%; background:var(--oro); width:0%; transition:width 0.5s ease-out; }
 </style>
 </head>
 <body>
@@ -125,6 +132,16 @@ h2,h3,h4{font-family:var(--font-title);margin-top:0;}
 <div class="row" style="margin-top:16px"><button id="start" style="font-size:16px; padding:12px 20px;">Iniciar sesión</button></div>
 </div>
 <div class="card hide" id="sess" style="padding:0; overflow:hidden;">
+  
+  <!-- NUEVO: Radar de interacción del alumno -->
+  <div id="student-radar">
+    <div class="radar-item">💬 Interacciones: <span class="radar-val" id="r-turns">0</span></div>
+    <div class="radar-item">💡 Pistas: <span class="radar-val" id="r-hints">0</span></div>
+    <div class="radar-item" style="flex:2;">📈 Nivel: <span class="radar-val" id="r-level">—</span>
+      <div class="progress-bg"><div class="progress-fill" id="r-progress"></div></div>
+    </div>
+  </div>
+
   <div id="chat" aria-live="polite"></div>
   <div id="quick-prompts" class="hide" style="padding:0 16px 16px 16px;">
     <button class="quick-prompt" data-prompt="No entiendo el concepto principal del material. ¿Me lo explicas paso a paso?">🤔 No entiendo el concepto principal</button>
@@ -215,7 +232,7 @@ h2,h3,h4{font-family:var(--font-title);margin-top:0;}
   <div class="row" style="margin-top:8px"><button class="s" id="saveAIRules">Guardar instrucciones</button></div>
 
   <h4 style="margin-top:24px;">Revisar y analizar reportes</h4>
-  <p class="mut">Carga los archivos <code>.md</code> de tus alumnos para extraer estadísticas grupales.</p>
+  <p class="mut">Carga los archivos <code>.md</code> de tus alumnos para extraer estadísticas grupales y calificaciones sugeridas.</p>
   <input type="file" id="rv" accept=".md,.txt" multiple style="margin-bottom:12px;">
   
   <div id="group-stats" class="hide">
@@ -224,11 +241,28 @@ h2,h3,h4{font-family:var(--font-title);margin-top:0;}
       <div class="stat-item">Bloom Promedio <span class="stat-val" id="st-avg">0.0</span></div>
       <div class="stat-item">Bloom Máximo <span class="stat-val" id="st-max">0</span></div>
     </div>
-    <div class="chart-container" id="chart-bars">
-      <!-- Las barras se generan dinámicamente con JS -->
-    </div>
+    <div class="chart-container" id="chart-bars"></div>
     <div style="display:flex; justify-content:space-between; margin-top:4px; font-size:10px; color:var(--mut);">
       <span>Recordar</span><span>Comprender</span><span>Aplicar</span><span>Analizar</span><span>Evaluar</span><span>Crear</span>
+    </div>
+    
+    <!-- NUEVO: Tabla de calificaciones y exportación -->
+    <div class="row" style="margin-top:16px">
+      <button id="exportGrades" style="background:var(--azul2);">📥 Exportar calificaciones a CSV</button>
+    </div>
+    <div style="overflow-x:auto; margin-top:12px;">
+      <table id="gradeTable" style="width:100%; border-collapse:collapse; font-size:12px;">
+        <thead>
+          <tr style="background:var(--ia); color:var(--azul2);">
+            <th>Alumno / Archivo</th>
+            <th>Bloom Prom.</th>
+            <th>Bloom Máx.</th>
+            <th>Interacciones</th>
+            <th>Calificación Sugerida</th>
+          </tr>
+        </thead>
+        <tbody id="gradeBody"></tbody>
+      </table>
     </div>
   </div>
 
@@ -392,7 +426,7 @@ function enterApp() {
   
   loadMaterias();
   restorePdfFromCache();
-  restoreSession(); // NUEVO: Restaurar sesión previa del alumno
+  restoreSession(); 
   if (S.admin) {
     loadStaff();
     loadAIRules();
@@ -452,12 +486,10 @@ function restoreSession() {
     S.p = s.p; S.msgs = s.msgs; S.meta = s.meta || []; S.ayuda = s.ayuda || 0; S.t0 = s.t0;
     S.pdfName = s.pdfName || ''; S.pdfPages = s.pdfPages || [];
     
-    // Restaurar UI
     $('#setup').classList.add('hide');
     $('#sess').classList.remove('hide');
     $('#quick-prompts').classList.add('hide');
     
-    // Re-renderizar chat
     $('#chat').innerHTML = '';
     S.msgs.forEach(m => bub(m.role === 'user' ? 'us' : 'ia', m.content));
     stat();
@@ -631,7 +663,6 @@ function bub(c, t) {
   d.innerHTML = (c === 'ia') ? formatMD(t) : esc(t);
   
   if (c === 'ia') {
-    // Agregar botón de copiar
     const cp = document.createElement('button');
     cp.className = 'copy-btn';
     cp.innerHTML = '📋';
@@ -642,7 +673,6 @@ function bub(c, t) {
     };
     d.appendChild(cp);
 
-    // Enlazar citas
     d.querySelectorAll('.cite-btn').forEach(btn => {
       btn.onclick = () => {
         const page = parseInt(btn.dataset.page);
@@ -661,7 +691,24 @@ function bub(c, t) {
 }
 
 function strip(t) { const i = t.indexOf('##META'); return i < 0 ? t.trim() : t.slice(0, i).trim(); }
+
+function updateRadar() {
+  const turns = S.msgs.filter(m => m.role === 'user').length;
+  const hints = S.ayuda;
+  const b = S.meta.map(m => m.bloom).filter(Boolean);
+  const currentBloom = b.length ? b[b.length - 1] : 0;
+  
+  $('#r-turns').textContent = turns;
+  $('#r-hints').textContent = hints;
+  $('#r-level').textContent = currentBloom ? BL[currentBloom] : '—';
+  
+  // Barra de progreso (0% a 100% basado en Bloom 1 al 6)
+  const pct = currentBloom ? ((currentBloom - 1) / 5) * 100 : 0;
+  $('#r-progress').style.width = pct + '%';
+}
+
 function stat() {
+  updateRadar();
   const b = S.meta.map(m => m.bloom).filter(Boolean);
   const chipPdf = S.pdfName ? ` <span class="pdfchip">PDF: ${esc(S.pdfName)}</span>` : '';
   $('#stat').innerHTML = `Turnos: ${S.msgs.filter(m => m.role === 'user').length} · Ayudas: ${S.ayuda} · Bloom: <span class="pill">${b.length ? BL[b[b.length - 1]] : '—'}</span>${chipPdf}`;
@@ -687,11 +734,9 @@ async function ask(txt) {
   b.innerHTML = '<div class="typing-indicator"><span></span><span></span><span></span></div>';
 
   try {
-    // Usamos streaming aquí
     const response = await puter.ai.chat(messages, { model: 'gpt-5-nano', stream: true });
     let fullText = '';
     
-    // Inicializar burbuja para ir escribiendo
     b.innerHTML = '';
     const textContainer = document.createElement('div');
     b.appendChild(textContainer);
@@ -699,17 +744,14 @@ async function ask(txt) {
     for await (const part of response) {
       if (part?.text) {
         fullText += part.text;
-        // Removemos temporalmente el META para no mostrarlo en vivo
         textContainer.innerHTML = formatMD(strip(fullText));
         $('#chat').scrollTop = 1e9;
       }
     }
 
-    // Al terminar, procesamos el texto completo final
     b.innerHTML = formatMD(strip(fullText));
-    b = bub('ia', strip(fullText)); // Volvemos a inyectar para tener el botón de copiar y citas actualizadas
+    b = bub('ia', strip(fullText)); 
     
-    // Eliminamos la burbuja temporal de texto
     if (textContainer.parentNode) textContainer.parentNode.removeChild(textContainer);
 
     S.msgs.push({ role: 'assistant', content: fullText });
@@ -741,6 +783,7 @@ $('#start').onclick = () => {
   S.msgs = []; S.meta = []; S.ayuda = 0; S.t0 = new Date(); $('#chat').innerHTML = '';
   $('#setup').classList.add('hide'); $('#sess').classList.remove('hide');
   $('#quick-prompts').classList.remove('hide');
+  stat(); // Inicializa el radar
   ask('Inicia la sesión con tu primera pregunta o propuesta.');
 };
 $('#send').onclick = () => { const t = $('#inp').value.trim(); if (!t) return; $('#inp').value = ''; bub('us', t); ask(t); };
@@ -762,11 +805,11 @@ $('#fin').onclick = async () => {
     S.fb = text;
   } catch (e) { S.fb = '(No se pudo generar la retroalimentación automática.)'; }
   $('#fin').disabled = false; $('#fin').textContent = 'Generar retroalimentación y reporte';
-  clearSession(); // Limpiamos la sesión guardada al cerrarla formalmente
+  clearSession(); 
   document.querySelector('[data-t=rep]').click();
 };
 
-/* ======================= REPORTES Y BITÁCORA ======================= */
+/* ======================= REPORTES Y ANÁLISIS ======================= */
 function ind() {
   const b = S.meta.map(m => m.bloom).filter(Boolean), e = {};
   S.meta.forEach(m => m.est && (e[m.est] = (e[m.est] || 0) + 1));
@@ -1090,7 +1133,7 @@ async function loadPdf(f) {
     $('#pdfName2').textContent = f.name + ' · ' + badge;
     $('#pdfInfo2').classList.remove('hide');
     stat();
-    saveSession(); // Autoguardar
+    saveSession();
 
     try { await idbPut('pdf', { id: 'material', name: f.name, pages: S.pdfPages, at: Date.now() }); } catch (e) {}
   } catch (e) { m('No pude abrir el PDF: ' + (e.message || e)); }
@@ -1145,27 +1188,52 @@ $('#newS').onclick = async () => {
   clearSession();
 };
 
-/* ======================= DASHBOARD REPORTES Y ANÁLISIS ======================= */
+/* ======================= NUEVO: DASHBOARD Y CALIFICACIONES ======================= */
+let currentGrades = []; // Almacena temporalmente los resultados para exportar
+
 $('#rv').onchange = async e => {
   $('#rvo').innerHTML = '';
   let count = 0, sumBloom = 0, maxBloom = 0;
   const bloomCounts = {1:0, 2:0, 3:0, 4:0, 5:0, 6:0};
+  currentGrades = [];
   
   for (const f of e.target.files) {
     const text = await f.text();
-    // Extraer Bloom del reporte (promedio y máximo)
+    
+    // Regex para extraer datos del reporte
     const maxMatch = text.match(/Nivel de Bloom máximo:\s*([A-Za-z]+)\s*\(promedio\s+([\d.]+)\)/i);
+    const turnMatch = text.match(/Intervenciones del alumno:\s*(\d+)/i);
+    
+    let bloomProm = 0, bloomMaxTxt = '—', turns = 0;
     
     if (maxMatch) {
       count++;
-      const val = parseFloat(maxMatch[2]);
-      sumBloom += val;
-      if (val > maxBloom) maxBloom = val;
+      bloomProm = parseFloat(maxMatch[2]);
+      bloomMaxTxt = maxMatch[1];
+      sumBloom += bloomProm;
+      if (bloomProm > maxBloom) maxBloom = bloomProm;
       
-      // Llenar gráfica (redondeando el promedio al entero más cercano)
-      const bIndex = Math.round(val);
+      const bIndex = Math.round(bloomProm);
       if (bIndex >= 1 && bIndex <= 6) bloomCounts[bIndex]++;
     }
+    
+    if (turnMatch) {
+      turns = parseInt(turnMatch[1]);
+    }
+
+    // Lógica de calificación sugerida (0 a 10)
+    // Base: Bloom promedio (ej. 4.5 * 1.5 = 6.75) + Bono por interacciones (min 2 puntos)
+    let grade = (bloomProm * 1.5) + Math.min(turns * 0.5, 2);
+    if (!maxMatch) grade = 0; // Si no hay datos, calificación 0
+    grade = Math.min(Math.max(grade, 0), 10).toFixed(1);
+
+    currentGrades.push({
+      filename: f.name,
+      bloomProm: bloomProm.toFixed(1),
+      bloomMax: bloomMaxTxt,
+      turns: turns,
+      grade: grade
+    });
 
     const d = document.createElement('details');
     d.innerHTML = '<summary>' + esc(f.name) + '</summary><div class="mut">' + md(text) + '</div>';
@@ -1196,9 +1264,31 @@ $('#rv').onchange = async e => {
       `;
       container.appendChild(wrapper);
     }
+
+    // Renderizar Tabla de Calificaciones
+    const tbody = $('#gradeBody');
+    tbody.innerHTML = currentGrades.map(g => `
+      <tr style="border-bottom:1px solid var(--bd);">
+        <td>${esc(g.filename)}</td>
+        <td>${g.bloomProm}</td>
+        <td>${g.bloomMax}</td>
+        <td>${g.turns}</td>
+        <td style="font-weight:bold; color:var(--azul2);">${g.grade}</td>
+      </tr>
+    `).join('');
   } else {
     $('#group-stats').classList.add('hide');
   }
+};
+
+$('#exportGrades').onclick = () => {
+  if (!currentGrades.length) return note('No hay calificaciones para exportar.', false);
+  let csv = 'Archivo,Alumno,Bloom Promedio,Bloom Maximo,Interacciones,Calificacion Sugerida\n';
+  currentGrades.forEach(g => {
+    csv += `"${g.filename}","",${g.bloomProm},${g.bloomMax},${g.turns},${g.grade}\n`;
+  });
+  descargar('calificaciones-sugeridas-' + stamp() + '.csv', csv);
+  note('✓ Archivo CSV descargado.', true);
 };
 
 /* ======================= MENSAJES ======================= */
@@ -1247,7 +1337,7 @@ function confirmUI(msg, word) {
 }
 
 /* ======================= ARRANQUE ======================= */
-dbg('Recurso iniciado. Bloque 1 + 2 + 3 listos.');
+dbg('Recurso iniciado. Bloque 1 + 2 + 3 + 4 listos.');
 </script>
 </body>
 </html>
